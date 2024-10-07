@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { CourseMonitoring3Stack } from '../lib/course-monitoring3-stack';
+import { CourseMonitoring3Stack } from '../lib/stack';
 
 const app = new cdk.App();
 new CourseMonitoring3Stack(app, 'CourseMonitoring3Stack', {

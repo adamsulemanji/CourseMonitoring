@@ -8,7 +8,11 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "format": "prettier --write '**/*.{js,ts,json,css,md,jsx}'",
+    "format-check": "prettier --check \"src/**/*.ts\"",
+    "lint": "eslint '**/*.{js,ts,jsx}' --fix",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
