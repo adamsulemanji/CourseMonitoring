@@ -1,12 +1,16 @@
 *.js
 !jest.config.js
+!eslint.config.js
 *.d.ts
+.env
 node_modules
 
 # CDK asset staging directory
 .cdk.staging
 cdk.out
 
-.env
+# Dont ignore anything in the lambda directory
+!lambda/**
 
-*.txt
+# Dont ignore anything in the frontend directory
+!frontend/**
