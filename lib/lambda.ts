@@ -59,5 +59,16 @@ export class LambdaConstruct extends Construct {
         code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       },
     );
+
+
+    // Environment variables for the Lambda function each table
+    this.users.addEnvironment('USERS_TABLE_NAME', usersTableName);
+    this.users.addEnvironment('CLASSES_TABLE_NAME', classesTableName);
+
+    this.classes.addEnvironment('USERS_TABLE_NAME', usersTableName);
+    this.classes.addEnvironment('CLASSES_TABLE_NAME', classesTableName);
+
+    this.scrape.addEnvironment('CLASSES_TABLE_NAME', classesTableName);
+    this.scrape.addEnvironment('USERS_TABLE_NAME', usersTableName);
   }
 }

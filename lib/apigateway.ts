@@ -44,8 +44,27 @@ export class ApiGatewayConstruct extends Construct {
       authorizer,
     });
     users.addMethod('GET', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer,
-        });
+        authorizer
+    });
+    const userUUID = users.addResource('{uuid}');
+    userUUID.addMethod('GET', new apigateway.LambdaIntegration(lambdaFunction[0]), {
+        authorizer
+    });
+    userUUID.addMethod('PATCH', new apigateway.LambdaIntegration(lambdaFunction[0]), {
+        authorizer
+    });
+    userUUID.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[0]), {
+        authorizer
+    });
+    const Usersclases = userUUID.addResource('classes');
+    Usersclases.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[0]), {
+        authorizer
+    });
+    const userClassDelete = Usersclases.addResource('{classId}');
+    userClassDelete.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[0]), {
+        authorizer
+    });
+
 
 
 
