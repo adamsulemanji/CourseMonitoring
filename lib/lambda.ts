@@ -11,11 +11,7 @@ export class LambdaConstruct extends Construct {
   public readonly scrape: lambda.Function;
   public readonly toggle: lambda.Function;
 
-  constructor(
-    scope: Construct,
-    id: string,
-    dynamos: dynamodb.Table[],
-  ) {
+  constructor(scope: Construct, id: string, dynamos: dynamodb.Table[]) {
     super(scope, id);
 
     // ******* Get the DynamoDB table name *******
@@ -50,16 +46,11 @@ export class LambdaConstruct extends Construct {
     });
 
     // ********** Lambda for toggling the EventBridge rule **********
-    this.toggle = new lambda.Function(
-      this,
-      'ToggleLambda',
-      {
-        runtime: lambda.Runtime.NODEJS_16_X,
-        handler: 'toggle.handler',
-        code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
-      },
-    );
-
+    this.toggle = new lambda.Function(this, 'ToggleLambda', {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      handler: 'toggle.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
+    });
 
     // Environment variables for the Lambda function each table
     this.users.addEnvironment('USERS_TABLE_NAME', usersTableName);

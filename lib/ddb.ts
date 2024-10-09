@@ -7,24 +7,21 @@ export class DynamoDBConstruct extends Construct {
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
-    
 
     this.userTable = new dynamodb.Table(this, 'UserTable', {
-        partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      });
-  
-    
-      this.classTable = new dynamodb.Table(this, 'ClassTable', {
-        partitionKey: { name: 'classId', type: dynamodb.AttributeType.STRING },
-        sortKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      });
-  
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
 
-      this.classTable.addGlobalSecondaryIndex({
-        indexName: 'CRNIndex',
-        partitionKey: { name: 'CRN', type: dynamodb.AttributeType.STRING },
-      });
+    this.classTable = new dynamodb.Table(this, 'ClassTable', {
+      partitionKey: { name: 'classId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    this.classTable.addGlobalSecondaryIndex({
+      indexName: 'CRNIndex',
+      partitionKey: { name: 'CRN', type: dynamodb.AttributeType.STRING },
+    });
   }
 }

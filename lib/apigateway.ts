@@ -40,58 +40,105 @@ export class ApiGatewayConstruct extends Construct {
     );
 
     const users = api.root.addResource('users');
-    users.addMethod('POST', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-      authorizer,
-    });
-    users.addMethod('GET', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer
-    });
+    users.addMethod(
+      'POST',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
+    users.addMethod(
+      'GET',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
     const userUUID = users.addResource('{uuid}');
-    userUUID.addMethod('GET', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer
-    });
-    userUUID.addMethod('PATCH', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer
-    });
-    userUUID.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer
-    });
+    userUUID.addMethod(
+      'GET',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
+    userUUID.addMethod(
+      'PATCH',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
+    userUUID.addMethod(
+      'DELETE',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
     const Usersclases = userUUID.addResource('classes');
-    Usersclases.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer
-    });
+    Usersclases.addMethod(
+      'DELETE',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
     const userClassDelete = Usersclases.addResource('{classId}');
-    userClassDelete.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[0]), {
-        authorizer
-    });
-
-
-
+    userClassDelete.addMethod(
+      'DELETE',
+      new apigateway.LambdaIntegration(lambdaFunction[0]),
+      {
+        authorizer,
+      },
+    );
 
     const classes = api.root.addResource('classes');
-    classes.addMethod('POST', new apigateway.LambdaIntegration(lambdaFunction[1]), {
-      authorizer,
-    });
-    classes.addMethod('GET', new apigateway.LambdaIntegration(lambdaFunction[1]), {
-        authorizer
-    });
-    classes.addMethod('PUT', new apigateway.LambdaIntegration(lambdaFunction[1]), {
-        authorizer
-    });
-    classes.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaFunction[1]), {
-        authorizer
-    });
-
-
+    classes.addMethod(
+      'POST',
+      new apigateway.LambdaIntegration(lambdaFunction[1]),
+      {
+        authorizer,
+      },
+    );
+    classes.addMethod(
+      'GET',
+      new apigateway.LambdaIntegration(lambdaFunction[1]),
+      {
+        authorizer,
+      },
+    );
+    classes.addMethod(
+      'PUT',
+      new apigateway.LambdaIntegration(lambdaFunction[1]),
+      {
+        authorizer,
+      },
+    );
+    classes.addMethod(
+      'DELETE',
+      new apigateway.LambdaIntegration(lambdaFunction[1]),
+      {
+        authorizer,
+      },
+    );
 
     const scrape = api.root.addResource('scrape');
-    scrape.addMethod('POST', new apigateway.LambdaIntegration(lambdaFunction[2]), {
-      authorizer,
-    });
+    scrape.addMethod(
+      'POST',
+      new apigateway.LambdaIntegration(lambdaFunction[2]),
+      {
+        authorizer,
+      },
+    );
 
     const toggle = api.root.addResource('toggle');
-    toggle.addMethod('POST', new apigateway.LambdaIntegration(lambdaFunction[3]), {
-      authorizer,
-    });
+    toggle.addMethod(
+      'POST',
+      new apigateway.LambdaIntegration(lambdaFunction[3]),
+      {
+        authorizer,
+      },
+    );
   }
 }

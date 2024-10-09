@@ -15,16 +15,14 @@ export class CourseMonitoring3Stack extends cdk.Stack {
     // ******** Create DynamoDB tables ********
     const dynamoDbConstruct = new DynamoDBConstruct(this, 'DynamoDBConstruct');
 
-
     // ******** Create Cognito User Pool ********
     const cognitoConstruct = new CognitoConstruct(this, 'CognitoConstruct');
 
     // ******** Create Lambda Functions ********
-    const lambdaConstruct = new LambdaConstruct(
-      this,
-      'LambdaConstruct',
-      [dynamoDbConstruct.userTable, dynamoDbConstruct.classTable],
-    );
+    const lambdaConstruct = new LambdaConstruct(this, 'LambdaConstruct', [
+      dynamoDbConstruct.userTable,
+      dynamoDbConstruct.classTable,
+    ]);
 
     // ******** Create Event Bridge Rule ********
     const eventBridgeConstruct = new EventConstruct(
