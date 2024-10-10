@@ -5,6 +5,7 @@ const {
   GetItemCommand,
   ScanCommand,
   DeleteItemCommand,
+  QueryCommand,
 } = require('@aws-sdk/client-dynamodb');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
 const { randomUUID: AWS_util_uuid_v4 } = require('crypto');
@@ -147,52 +148,48 @@ const handler = async (event) => {
         };
 
       case method === 'DELETE' && resource === `/users/{uuid}/classes`:
-        const getUserParamsForDelete = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
-        };
-        const { Item: userForDelete } = await ddbClient.send(
-          new GetItemCommand(getUserParamsForDelete),
-        );
-        if (!userForDelete) {
-          return {
-            statusCode: 404,
-            headers,
-            body: JSON.stringify({ message: 'User not found' }),
-          };
-        }
-
-        const getClassesForUserParams = {
+        const fetchUserClassesParams = {
           TableName: classTable,
-          FilterExpression: 'userId = :u',
-          ExpressionAttributeValues: { ':u': { S: pathParameters.uuid } },
+          IndexName: 'userId-index', // If you have a GSI on userId
+          KeyConditionExpression: 'userId = :userUuid',
+          ExpressionAttributeValues: {
+            ':userUuid': { S: pathParameters.uuid },
+          },
         };
-        const { Items: classesForUser } = await ddbClient.send(
-          new ScanCommand(getClassesForUserParams),
+
+        const { Items: userClassesToDelete } = await ddbClient.send(
+          new QueryCommand(fetchUserClassesParams),
         );
 
-        const deleteClassesPromises = classesForUser.map((c) => {
-          const deleteClassParams = {
+        const deleteClassesPromises = userClassesToDelete.map((classItem) => {
+          const classDeletionParams = {
             TableName: classTable,
-            Key: { classId: c.classId },
+            Key: {
+              classId: { S: classItem.classId.S }, // Partition key
+              userId: { S: pathParameters.uuid }, // Sort key
+            },
           };
-          return ddbClient.send(new DeleteItemCommand(deleteClassParams));
+          return ddbClient.send(new DeleteItemCommand(classDeletionParams));
         });
+
         await Promise.all(deleteClassesPromises);
 
-        // empty the classes array for the user
-        const updateUserParamsForDelete = {
+        // Update the user table to clear the classes array
+        const userClassesClearParams = {
           TableName: userTable,
           Key: { userId: { S: pathParameters.uuid } },
-          UpdateExpression: 'SET classes = :c',
-          ExpressionAttributeValues: { ':c': { L: [] } },
+          UpdateExpression: 'SET classes = :emptyClassList',
+          ExpressionAttributeValues: { ':emptyClassList': { L: [] } },
         };
-        await ddbClient.send(new UpdateItemCommand(updateUserParamsForDelete));
+
+        await ddbClient.send(new UpdateItemCommand(userClassesClearParams));
 
         return {
           statusCode: 200,
           headers,
-          body: JSON.stringify({ message: 'User Deleted' }),
+          body: JSON.stringify({
+            message: 'All classes successfully deleted for the user',
+          }),
         };
 
       case method === 'DELETE' && resource === `/users/{uuid}/`:
@@ -244,25 +241,13 @@ const handler = async (event) => {
 
       case method === 'DELETE' &&
         resource === `/users/{uuid}/classes/{classId}`:
-        // get the user by id, then delete the class by id, then remove the class id from the array of classes for the user
-        const getUserParamsForDelete3 = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
-        };
-        const { Item: userForDelete3 } = await ddbClient.send(
-          new GetItemCommand(getUserParamsForDelete3),
-        );
-        if (!userForDelete3) {
-          return {
-            statusCode: 404,
-            headers,
-            body: JSON.stringify({ message: 'User not found' }),
-          };
-        }
-
+        // Ensure both classId and userId are provided for deletion
         const getClassParamsForDelete = {
           TableName: classTable,
-          Key: { classId: { S: pathParameters.classId } },
+          Key: {
+            classId: { S: pathParameters.classId }, // Partition key
+            userId: { S: pathParameters.uuid }, // Sort key
+          },
         };
 
         const { Item: classForDelete } = await ddbClient.send(
@@ -278,19 +263,40 @@ const handler = async (event) => {
 
         await ddbClient.send(new DeleteItemCommand(getClassParamsForDelete));
 
-        const userForDelete4 = unmarshall(userForDelete3);
-        userForDelete3.classes = userForDelete4.classes.filter(
-          (c) => c !== pathParameters.classId,
+        // Update user classes array to remove the classId
+        const getUserParamsForDelete5 = {
+          TableName: userTable,
+          Key: { userId: { S: pathParameters.uuid } },
+        };
+        const { Item: userForDelete5 } = await ddbClient.send(
+          new GetItemCommand(getUserParamsForDelete5),
         );
-        const updateUserParamsForDelete3 = {
+        if (!userForDelete5) {
+          return {
+            statusCode: 404,
+            headers,
+            body: JSON.stringify({ message: 'User not found' }),
+          };
+        }
+
+        const userForDeleteUnmarshalled = unmarshall(userForDelete5);
+        userForDeleteUnmarshalled.classes =
+          userForDeleteUnmarshalled.classes.filter(
+            (c) => c !== pathParameters.classId,
+          );
+
+        const updateUserParamsForDelete5 = {
           TableName: userTable,
           Key: { userId: { S: pathParameters.uuid } },
           UpdateExpression: 'SET classes = :c',
           ExpressionAttributeValues: {
-            ':c': { L: userForDelete4.classes.map((c) => ({ S: c })) },
+            ':c': {
+              L: userForDeleteUnmarshalled.classes.map((c) => ({ S: c })),
+            },
           },
         };
-        await ddbClient.send(new UpdateItemCommand(updateUserParamsForDelete3));
+
+        await ddbClient.send(new UpdateItemCommand(updateUserParamsForDelete5));
 
         return {
           statusCode: 200,
