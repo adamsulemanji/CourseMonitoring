@@ -7,7 +7,6 @@ import { Construct } from 'constructs';
 
 export class LambdaConstruct extends Construct {
   public readonly users: lambda.Function;
-  public readonly classes: lambda.Function;
   public readonly scrape: lambda.Function;
   public readonly toggle: lambda.Function;
 
@@ -28,16 +27,6 @@ export class LambdaConstruct extends Construct {
       },
     });
 
-    // ********** Lambda for classes **********
-    this.classes = new lambda.Function(this, 'ClassesLambda', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'classes.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
-      environment: {
-        CLASSES_TABLE_NAME: classesTableName,
-      },
-    });
-
     // ********** Lambda for EventBridge rule **********
     this.scrape = new lambda.Function(this, 'ScrapeLambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -55,9 +44,6 @@ export class LambdaConstruct extends Construct {
     // Environment variables for the Lambda function each table
     this.users.addEnvironment('USERS_TABLE_NAME', usersTableName);
     this.users.addEnvironment('CLASSES_TABLE_NAME', classesTableName);
-
-    this.classes.addEnvironment('USERS_TABLE_NAME', usersTableName);
-    this.classes.addEnvironment('CLASSES_TABLE_NAME', classesTableName);
 
     this.scrape.addEnvironment('CLASSES_TABLE_NAME', classesTableName);
     this.scrape.addEnvironment('USERS_TABLE_NAME', usersTableName);

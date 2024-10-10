@@ -93,40 +93,10 @@ export class ApiGatewayConstruct extends Construct {
       },
     );
 
-    const classes = api.root.addResource('classes');
-    classes.addMethod(
-      'POST',
-      new apigateway.LambdaIntegration(lambdaFunction[1]),
-      {
-        authorizer,
-      },
-    );
-    classes.addMethod(
-      'GET',
-      new apigateway.LambdaIntegration(lambdaFunction[1]),
-      {
-        authorizer,
-      },
-    );
-    classes.addMethod(
-      'PUT',
-      new apigateway.LambdaIntegration(lambdaFunction[1]),
-      {
-        authorizer,
-      },
-    );
-    classes.addMethod(
-      'DELETE',
-      new apigateway.LambdaIntegration(lambdaFunction[1]),
-      {
-        authorizer,
-      },
-    );
-
     const scrape = api.root.addResource('scrape');
     scrape.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(lambdaFunction[2]),
+      new apigateway.LambdaIntegration(lambdaFunction[1]),
       {
         authorizer,
       },
@@ -135,7 +105,7 @@ export class ApiGatewayConstruct extends Construct {
     const toggle = api.root.addResource('toggle');
     toggle.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(lambdaFunction[3]),
+      new apigateway.LambdaIntegration(lambdaFunction[2]),
       {
         authorizer,
       },

@@ -39,12 +39,7 @@ export class CourseMonitoring3Stack extends cdk.Stack {
     new ApiGatewayConstruct(
       this,
       'ApiGatewayConstruct',
-      [
-        lambdaConstruct.users,
-        lambdaConstruct.classes,
-        lambdaConstruct.scrape,
-        lambdaConstruct.toggle,
-      ],
+      [lambdaConstruct.users, lambdaConstruct.scrape, lambdaConstruct.toggle],
       cognitoConstruct.userPool,
     );
 
