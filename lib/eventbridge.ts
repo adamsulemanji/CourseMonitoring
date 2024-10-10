@@ -13,6 +13,7 @@ export class EventConstruct extends Construct {
     // ********** Event bridge Creation **********
     this.eventRule = new events.Rule(this, 'CourseMonitoring3Minutes', {
       schedule: events.Schedule.rate(cdk.Duration.minutes(5)),
+      enabled: false,
     });
 
     // ********** Add target to Event Bridge Rule **********

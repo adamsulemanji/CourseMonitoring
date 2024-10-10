@@ -53,7 +53,7 @@ export class CourseMonitoring3Stack extends cdk.Stack {
 
     // ********** Grant Permissions **********
     dynamoDbConstruct.userTable.grantFullAccess(lambdaConstruct.users);
-    dynamoDbConstruct.classTable.grantFullAccess(lambdaConstruct.classes);
+    dynamoDbConstruct.classTable.grantFullAccess(lambdaConstruct.users);
     lambdaConstruct.toggle.addToRolePolicy(
       new iam.PolicyStatement({
         actions: [

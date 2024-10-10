@@ -18,10 +18,5 @@ export class DynamoDBConstruct extends Construct {
       sortKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
-
-    this.classTable.addGlobalSecondaryIndex({
-      indexName: 'CRNIndex',
-      partitionKey: { name: 'CRN', type: dynamodb.AttributeType.STRING },
-    });
   }
 }

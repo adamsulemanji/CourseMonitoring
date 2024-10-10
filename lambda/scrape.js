@@ -4,7 +4,6 @@ const headers = {
 };
 
 const handler = async (event) => {
-  console.log('Scraping website...');
   return {
     statusCode: 200,
     headers: headers,

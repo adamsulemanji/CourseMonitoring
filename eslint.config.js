@@ -39,6 +39,6 @@ module.exports = [
   },
   prettierConfig,
   {
-    ignores: ['cdk.out', 'node_modules', 'dist'],
+    ignores: ['cdk.out', 'node_modules', 'dist', 'build'],
   },
 ];
