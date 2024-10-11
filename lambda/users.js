@@ -8,89 +8,90 @@ const {
   QueryCommand,
 } = require('@aws-sdk/client-dynamodb');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
-const { randomUUID: AWS_util_uuid_v4 } = require('crypto');
+const { randomUUID: generateUUID } = require('crypto');
 
-const ddbClient = new DynamoDBClient({});
-const headers = {
+const dynamoDbClient = new DynamoDBClient({});
+const responseHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': '*',
 };
 
 const handler = async (event) => {
-  const method = event.httpMethod;
-  const resource = event.resource;
-  const pathParameters = event.pathParameters || {};
-  const body = event.body ? JSON.parse(event.body) : {};
+  const httpMethod = event.httpMethod;
+  const resourcePath = event.resource;
+  const pathParams = event.pathParameters || {};
+  const requestBody = event.body ? JSON.parse(event.body) : {};
 
-  const userTable = process.env.USERS_TABLE_NAME;
-  const classTable = process.env.CLASSES_TABLE_NAME;
+  const userTableName = process.env.USERS_TABLE_NAME;
+  const classTableName = process.env.CLASSES_TABLE_NAME;
 
   console.log('Event:', event);
 
   try {
     switch (true) {
-      case method === 'POST' && resource === '/users':
-        if (!body.email) {
+      case httpMethod === 'POST' && resourcePath === '/users':
+        if (!requestBody.email) {
           return {
             statusCode: 400,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({ message: 'Email is required' }),
           };
         }
         const createUserParams = {
-          TableName: userTable,
+          TableName: userTableName,
           Item: {
-            userId: { S: AWS_util_uuid_v4() },
-            email: { S: body.email },
+            userId: { S: generateUUID() },
+            email: { S: requestBody.email },
             classes: { L: [] },
           },
         };
-        await ddbClient.send(new PutItemCommand(createUserParams));
+        await dynamoDbClient.send(new PutItemCommand(createUserParams));
         return {
           statusCode: 201,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({ message: 'New User Created' }),
         };
 
-      case method === 'GET' && resource === '/users':
-        const scanParams = { TableName: userTable };
-        const { Items } = await ddbClient.send(new ScanCommand(scanParams));
-        const users = Items.map((item) => unmarshall(item));
+      case httpMethod === 'GET' && resourcePath === '/users':
+        const scanUsersParams = { TableName: userTableName };
+        const { Items: usersData } = await dynamoDbClient.send(
+          new ScanCommand(scanUsersParams),
+        );
+        const users = usersData.map((item) => unmarshall(item));
         return {
           statusCode: 200,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({ users }),
         };
 
-      case method === 'GET' && resource === `/users/{uuid}`:
+      case httpMethod === 'GET' && resourcePath === `/users/{uuid}`:
         const getUserParams = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
         };
-        const { Item } = await ddbClient.send(
+        const { Item: userItem } = await dynamoDbClient.send(
           new GetItemCommand(getUserParams),
         );
-        if (!Item) {
+        if (!userItem) {
           return {
             statusCode: 404,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({ message: 'User not found' }),
           };
         }
         return {
           statusCode: 200,
-          headers,
-          body: JSON.stringify({ user: unmarshall(Item) }),
+          headers: responseHeaders,
+          body: JSON.stringify({ user: unmarshall(userItem) }),
         };
 
-      case method === 'PATCH' && resource === `/users/{uuid}`:
-        const { crn, year, semester } = body;
+      case httpMethod === 'PATCH' && resourcePath === `/users/{uuid}`:
+        const { crn, year, semester } = requestBody;
 
-        // Validation to ensure all required fields are present
         if (!crn || !year || !semester) {
           return {
             statusCode: 400,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({
               message: 'CRN, year, and semester are required',
             }),
@@ -98,216 +99,219 @@ const handler = async (event) => {
         }
 
         const getUserToUpdateParams = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
         };
-        const { Item: userItem } = await ddbClient.send(
+        const { Item: userToUpdateItem } = await dynamoDbClient.send(
           new GetItemCommand(getUserToUpdateParams),
         );
 
-        if (!userItem) {
+        if (!userToUpdateItem) {
           return {
             statusCode: 404,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({ message: 'User not found' }),
           };
         }
 
-        const classId = AWS_util_uuid_v4();
-        const classParams = {
-          TableName: classTable,
+        const classId = generateUUID();
+        const createClassParams = {
+          TableName: classTableName,
           Item: {
             classId: { S: classId },
-            crn: { S: crn }, // CRN is treated as a string
-            year: { N: year.toString() }, // Ensure year is a number
-            semester: { N: mapSemester(semester).toString() }, // Ensure semester is a number
-            userId: { S: pathParameters.uuid }, // UserId is a string
+            crn: { S: crn },
+            year: { N: year.toString() },
+            semester: { N: mapSemester(semester).toString() },
+            userId: { S: pathParams.uuid },
           },
         };
 
-        await ddbClient.send(new PutItemCommand(classParams));
+        await dynamoDbClient.send(new PutItemCommand(createClassParams));
 
-        const userToUpdate = unmarshall(userItem);
-        userToUpdate.classes.push(classId); // Add the new classId to the user's class list
+        const updatedUser = unmarshall(userToUpdateItem);
+        updatedUser.classes.push(classId);
 
         const updateUserParams = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
-          UpdateExpression: 'SET classes = :c',
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
+          UpdateExpression: 'SET classes = :classes',
           ExpressionAttributeValues: {
-            ':c': { L: userToUpdate.classes.map((c) => ({ S: c })) }, // Ensure class list is an array of strings
+            ':classes': { L: updatedUser.classes.map((c) => ({ S: c })) },
           },
         };
 
-        await ddbClient.send(new UpdateItemCommand(updateUserParams));
+        await dynamoDbClient.send(new UpdateItemCommand(updateUserParams));
 
         return {
           statusCode: 200,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({ message: 'User Updated' }),
         };
 
-      case method === 'DELETE' && resource === `/users/{uuid}/classes`:
-        const fetchUserClassesParams = {
-          TableName: classTable,
-          IndexName: 'userId-index', // If you have a GSI on userId
+      case httpMethod === 'DELETE' && resourcePath === `/users/{uuid}/classes`:
+        const queryClassesParams = {
+          TableName: classTableName,
+          IndexName: 'userId-index',
           KeyConditionExpression: 'userId = :userUuid',
           ExpressionAttributeValues: {
-            ':userUuid': { S: pathParameters.uuid },
+            ':userUuid': { S: pathParams.uuid },
           },
         };
 
-        const { Items: userClassesToDelete } = await ddbClient.send(
-          new QueryCommand(fetchUserClassesParams),
+        const { Items: userClasses } = await dynamoDbClient.send(
+          new QueryCommand(queryClassesParams),
         );
 
-        const deleteClassesPromises = userClassesToDelete.map((classItem) => {
-          const classDeletionParams = {
-            TableName: classTable,
+        const deleteClassesPromises = userClasses.map((classItem) => {
+          const deleteClassParams = {
+            TableName: classTableName,
             Key: {
-              classId: { S: classItem.classId.S }, // Partition key
-              userId: { S: pathParameters.uuid }, // Sort key
+              classId: { S: classItem.classId.S },
+              userId: { S: pathParams.uuid },
             },
           };
-          return ddbClient.send(new DeleteItemCommand(classDeletionParams));
+          return dynamoDbClient.send(new DeleteItemCommand(deleteClassParams));
         });
 
         await Promise.all(deleteClassesPromises);
 
-        // Update the user table to clear the classes array
-        const userClassesClearParams = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
+        const clearUserClassesParams = {
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
           UpdateExpression: 'SET classes = :emptyClassList',
           ExpressionAttributeValues: { ':emptyClassList': { L: [] } },
         };
 
-        await ddbClient.send(new UpdateItemCommand(userClassesClearParams));
+        await dynamoDbClient.send(
+          new UpdateItemCommand(clearUserClassesParams),
+        );
 
         return {
           statusCode: 200,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({
             message: 'All classes successfully deleted for the user',
           }),
         };
 
-      case method === 'DELETE' && resource === `/users/{uuid}/`:
-        // get a user by id, then delete the classes associated with that user, then delete the user
-        const getUserParamsForDelete2 = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
+      case httpMethod === 'DELETE' && resourcePath === `/users/{uuid}/`:
+        const getUserForDeleteParams = {
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
         };
-        const { Item: userForDelete2 } = await ddbClient.send(
-          new GetItemCommand(getUserParamsForDelete2),
+        const { Item: userToDelete } = await dynamoDbClient.send(
+          new GetItemCommand(getUserForDeleteParams),
         );
-        if (!userForDelete2) {
+        if (!userToDelete) {
           return {
             statusCode: 404,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({ message: 'User not found' }),
           };
         }
 
-        const getClassesForUserParams2 = {
-          TableName: classTable,
-          FilterExpression: 'userId = :u',
-          ExpressionAttributeValues: { ':u': { S: pathParameters.uuid } },
+        const scanClassesForUserParams = {
+          TableName: classTableName,
+          FilterExpression: 'userId = :userId',
+          ExpressionAttributeValues: { ':userId': { S: pathParams.uuid } },
         };
-        const { Items: classesForUser2 } = await ddbClient.send(
-          new ScanCommand(getClassesForUserParams2),
+        const { Items: userClassesToDelete } = await dynamoDbClient.send(
+          new ScanCommand(scanClassesForUserParams),
         );
 
-        const deleteClassesPromises2 = classesForUser2.map((c) => {
-          const deleteClassParams2 = {
-            TableName: classTable,
-            Key: { classId: c.classId },
+        const deleteClassPromises = userClassesToDelete.map((classItem) => {
+          const deleteClassParams = {
+            TableName: classTableName,
+            Key: { classId: classItem.classId },
           };
-          return ddbClient.send(new DeleteItemCommand(deleteClassParams2));
+          return dynamoDbClient.send(new DeleteItemCommand(deleteClassParams));
         });
-        await Promise.all(deleteClassesPromises2);
+        await Promise.all(deleteClassPromises);
 
         const deleteUserParams = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
         };
-        await ddbClient.send(new DeleteItemCommand(deleteUserParams));
+        await dynamoDbClient.send(new DeleteItemCommand(deleteUserParams));
 
         return {
           statusCode: 200,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({ message: 'User Deleted' }),
         };
 
-      case method === 'DELETE' &&
-        resource === `/users/{uuid}/classes/{classId}`:
-        // Ensure both classId and userId are provided for deletion
+      case httpMethod === 'DELETE' &&
+        resourcePath === `/users/{uuid}/classes/{classId}`:
         const getClassParamsForDelete = {
-          TableName: classTable,
+          TableName: classTableName,
           Key: {
-            classId: { S: pathParameters.classId }, // Partition key
-            userId: { S: pathParameters.uuid }, // Sort key
+            classId: { S: pathParams.classId },
+            userId: { S: pathParams.uuid },
           },
         };
 
-        const { Item: classForDelete } = await ddbClient.send(
+        const { Item: classToDelete } = await dynamoDbClient.send(
           new GetItemCommand(getClassParamsForDelete),
         );
-        if (!classForDelete) {
+        if (!classToDelete) {
           return {
             statusCode: 404,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({ message: 'Class not found' }),
           };
         }
 
-        await ddbClient.send(new DeleteItemCommand(getClassParamsForDelete));
-
-        // Update user classes array to remove the classId
-        const getUserParamsForDelete5 = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
-        };
-        const { Item: userForDelete5 } = await ddbClient.send(
-          new GetItemCommand(getUserParamsForDelete5),
+        await dynamoDbClient.send(
+          new DeleteItemCommand(getClassParamsForDelete),
         );
-        if (!userForDelete5) {
+
+        const getUserForUpdateParams = {
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
+        };
+        const { Item: userForUpdate } = await dynamoDbClient.send(
+          new GetItemCommand(getUserForUpdateParams),
+        );
+        if (!userForUpdate) {
           return {
             statusCode: 404,
-            headers,
+            headers: responseHeaders,
             body: JSON.stringify({ message: 'User not found' }),
           };
         }
 
-        const userForDeleteUnmarshalled = unmarshall(userForDelete5);
-        userForDeleteUnmarshalled.classes =
-          userForDeleteUnmarshalled.classes.filter(
-            (c) => c !== pathParameters.classId,
-          );
+        const updatedUserForDelete = unmarshall(userForUpdate);
+        updatedUserForDelete.classes = updatedUserForDelete.classes.filter(
+          (classId) => classId !== pathParams.classId,
+        );
 
-        const updateUserParamsForDelete5 = {
-          TableName: userTable,
-          Key: { userId: { S: pathParameters.uuid } },
-          UpdateExpression: 'SET classes = :c',
+        const updateUserClassesParams = {
+          TableName: userTableName,
+          Key: { userId: { S: pathParams.uuid } },
+          UpdateExpression: 'SET classes = :classes',
           ExpressionAttributeValues: {
-            ':c': {
-              L: userForDeleteUnmarshalled.classes.map((c) => ({ S: c })),
+            ':classes': {
+              L: updatedUserForDelete.classes.map((classId) => ({
+                S: classId,
+              })),
             },
           },
         };
 
-        await ddbClient.send(new UpdateItemCommand(updateUserParamsForDelete5));
+        await dynamoDbClient.send(
+          new UpdateItemCommand(updateUserClassesParams),
+        );
 
         return {
           statusCode: 200,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({ message: 'Class Deleted' }),
         };
 
       default:
         return {
           statusCode: 404,
-          headers,
+          headers: responseHeaders,
           body: JSON.stringify({ message: 'Route not found' }),
         };
     }
@@ -315,7 +319,7 @@ const handler = async (event) => {
     console.error('Error:', error);
     return {
       statusCode: 500,
-      headers,
+      headers: responseHeaders,
       body: JSON.stringify({ message: `An error occurred: ${error.message}` }),
     };
   }
