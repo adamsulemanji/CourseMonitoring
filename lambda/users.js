@@ -122,6 +122,8 @@ const handler = async (event) => {
             crn: { S: crn },
             year: { N: year.toString() },
             semester: { N: mapSemester(semester).toString() },
+            prevNotified: { BOOL: false },
+            seatsOpened: { BOOL: false },
             userId: { S: pathParams.uuid },
           },
         };

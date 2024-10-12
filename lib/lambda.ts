@@ -9,7 +9,6 @@ export class LambdaConstruct extends Construct {
   public readonly users: lambda.Function;
   public readonly scrape: lambda.Function;
   public readonly toggle: lambda.Function;
-  public readonly layer: lambda.LayerVersion;
 
   constructor(scope: Construct, id: string, dynamos: dynamodb.Table[]) {
     super(scope, id);
@@ -17,15 +16,6 @@ export class LambdaConstruct extends Construct {
     // ******* Get the DynamoDB table name *******
     const usersTableName = dynamos[0].tableName;
     const classesTableName = dynamos[1].tableName;
-
-    // ********** Lambda Layer **********
-    this.layer = new lambda.LayerVersion(this, 'Layer', {
-      code: lambda.Code.fromAsset(
-        path.join(__dirname, '../lambda/layers/python'),
-      ),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
-      description: 'A layer for the lambda functions',
-    });
 
     // ********** Lambda for users **********
     this.users = new lambda.Function(this, 'UsersLambda', {
@@ -39,10 +29,9 @@ export class LambdaConstruct extends Construct {
 
     // ********** Lambda for EventBridge rule **********
     this.scrape = new lambda.Function(this, 'ScrapeLambda', {
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.NODEJS_16_X,
       handler: 'scrape.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
-      layers: [this.layer],
     });
 
     // ********** Lambda for toggling the EventBridge rule **********
