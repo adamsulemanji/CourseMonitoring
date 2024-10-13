@@ -64,7 +64,7 @@ const handler = async (event) => {
           body: JSON.stringify({ users }),
         };
 
-      case httpMethod === 'GET' && resourcePath === `/users/{uuid}`:
+      case httpMethod === 'GET' && resourcePath === '/users/{uuid}':
         const getUserParams = {
           TableName: userTableName,
           Key: { userId: { S: pathParams.uuid } },
@@ -85,7 +85,7 @@ const handler = async (event) => {
           body: JSON.stringify({ user: unmarshall(userItem) }),
         };
 
-      case httpMethod === 'PATCH' && resourcePath === `/users/{uuid}`:
+      case httpMethod === 'PATCH' && resourcePath === '/users/{uuid}':
         const { crn, year, semester } = requestBody;
 
         if (!crn || !year || !semester) {
@@ -150,7 +150,7 @@ const handler = async (event) => {
           body: JSON.stringify({ message: 'User Updated' }),
         };
 
-      case httpMethod === 'DELETE' && resourcePath === `/users/{uuid}/classes`:
+      case httpMethod === 'DELETE' && resourcePath === '/users/{uuid}/classes':
         const queryClassesParams = {
           TableName: classTableName,
           IndexName: 'userId-index',
@@ -196,7 +196,7 @@ const handler = async (event) => {
           }),
         };
 
-      case httpMethod === 'DELETE' && resourcePath === `/users/{uuid}/`:
+      case httpMethod === 'DELETE' && resourcePath === '/users/{uuid}/':
         const getUserForDeleteParams = {
           TableName: userTableName,
           Key: { userId: { S: pathParams.uuid } },
@@ -243,7 +243,7 @@ const handler = async (event) => {
         };
 
       case httpMethod === 'DELETE' &&
-        resourcePath === `/users/{uuid}/classes/{classId}`:
+        resourcePath === '/users/{uuid}/classes/{classId}':
         const getClassParamsForDelete = {
           TableName: classTableName,
           Key: {
