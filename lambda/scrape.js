@@ -1,7 +1,6 @@
 const {
   DynamoDBClient,
   UpdateItemCommand,
-
   QueryCommand,
   ScanCommand,
 } = require('@aws-sdk/client-dynamodb');
