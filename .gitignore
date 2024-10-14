@@ -9,11 +9,10 @@ node_modules
 .cdk.staging
 cdk.out
 
-# Dont ignore anything in the lambda directory
-!lambda/**
-
 # Dont ignore anything in the frontend directory
 !frontend/**
 
 # Ignore the layers directory within the lambda directory
-lambda/layers/**
+lambda/nodejs/**
+
+

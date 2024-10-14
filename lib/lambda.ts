@@ -17,20 +17,26 @@ export class LambdaConstruct extends Construct {
     const usersTableName = dynamos[0].tableName;
     const classesTableName = dynamos[1].tableName;
 
+
+    // ********** Define the Lambda Layer **********
+    const nodejsLayer = new lambda.LayerVersion(this, 'NodeJsLayer', {
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/nodejs')),
+      compatibleRuntimes: [lambda.Runtime.NODEJS_20_X],
+      description: 'Lambda layer for axios and cheerio',
+    });
+
     // ********** Lambda for users **********
     this.users = new lambda.Function(this, 'UsersLambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'users.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
-      environment: {
-        USERS_TABLE_NAME: usersTableName,
-      },
     });
 
     // ********** Lambda for EventBridge rule **********
     this.scrape = new lambda.Function(this, 'ScrapeLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'scrape.handler',
+      layers: [nodejsLayer],
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
     });
 

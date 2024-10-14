@@ -15,6 +15,9 @@ const responseHeaders = {
 };
 
 const handler = async (event) => {
+
+  console.log('Scrape event:', event);
+
   try {
     const classTableName = process.env.CLASSES_TABLE_NAME;
     const userTableName = process.env.USERS_TABLE_NAME;
