@@ -44,7 +44,7 @@ export class CourseMonitoring3Stack extends cdk.Stack {
     );
 
     // ********** Frontend Construct **********
-    // new FrontendConstruct(this, 'FrontendConstruct');
+    new FrontendConstruct(this, 'FrontendConstruct');
 
     // ********** Grant Permissions **********
     dynamoDbConstruct.userTable.grantFullAccess(lambdaConstruct.users);
