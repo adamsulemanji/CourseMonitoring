@@ -12,16 +12,19 @@ import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 export class FrontendConstruct extends Construct {
   constructor(app: Construct, id: string) {
     super(app, id);
+    
+    const domainName = 'adamsulemanji.com';
+    const subDomain = 'courses';
 
     // ********** Frontend Bucket **********
-    const myBucket = new s3.Bucket(this, 'myBucket', {
+    const myBucket = new s3.Bucket(this, `myBucket-${subDomain}`, {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
 
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(
       this,
-      'cloudfront-OAI',
+      `cloudfront-OAI-${subDomain}`,
     );
 
     // ********** Bucket Policy **********
@@ -39,26 +42,26 @@ export class FrontendConstruct extends Construct {
 
     // ********** Route 53 **********
     const zone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-      domainName: 'adamsulemanji.com',
+      domainName: domainName,
     });
 
     // ********** ACM Certificate **********
-    const certificate = new acm.Certificate(this, 'Certificate', {
-      domainName: 'test.adamsulemanji.com',
+    const certificate = new acm.Certificate(this, `Certificate-${subDomain}`, {
+      domainName: `${subDomain}.${domainName}`,
       validation: acm.CertificateValidation.fromDns(zone),
     });
 
     // ********** CloudFront Distribution **********
     const s3Origin = new origin.S3Origin(myBucket);
 
-    const distribution = new cloudfront.Distribution(this, 'myDist', {
+    const distribution = new cloudfront.Distribution(this, `myDist-${subDomain}`, {
       defaultBehavior: {
         origin: s3Origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
       },
       defaultRootObject: 'index.html',
-      domainNames: ['courses.adamsulemanji.com'],
+      domainNames: [`${subDomain}.${domainName}`],
       certificate,
       errorResponses: [
         {
@@ -77,7 +80,7 @@ export class FrontendConstruct extends Construct {
     });
 
     // ********** Route 53 Alias Record **********
-    new route53.ARecord(this, 'AliasRecord', {
+    new route53.ARecord(this, `AliasRecord-${subDomain}`, {
       zone,
       recordName: 'test',
       target: route53.RecordTarget.fromAlias(
@@ -86,7 +89,7 @@ export class FrontendConstruct extends Construct {
     });
 
     // ********** Bucket Deployment **********
-    new bucket.BucketDeployment(this, 'DeployWithInvalidation', {
+    new bucket.BucketDeployment(this, `DeployWithInvalidation-${subDomain}`, {
       sources: [bucket.Source.asset('./frontend/build')],
       destinationBucket: myBucket,
       distribution,
@@ -96,10 +99,10 @@ export class FrontendConstruct extends Construct {
     });
 
     // ********** Output **********
-    new cdk.CfnOutput(this, 'DistributionDomainName', {
+    new cdk.CfnOutput(this, `DistributionDomainName-${subDomain}`, {
       value: distribution.domainName,
-      description: 'Distribution Domain Name',
-      exportName: 'DistributionDomainName',
+      description: `Distribution Domain Name for ${subDomain}`,
+      exportName: `DistributionDomainName-${subDomain}`,
     });
   }
 }
