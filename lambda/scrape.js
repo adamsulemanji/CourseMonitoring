@@ -132,7 +132,7 @@ const processClass = async (classDocument, classTableName, userTableName) => {
     return { classId, className, remainingSeats };
   } catch (error) {
     console.error(`Error processing class ${classDocument.classId}:`, error);
-    return null; // Ensure the rest of the scrapes continue
+    return null;
   }
 };
 

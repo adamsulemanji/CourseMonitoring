@@ -11,8 +11,9 @@
     "cdk": "cdk",
     "format": "prettier --write '**/*.{js,ts,json,css,md,jsx}'",
     "format-check": "prettier --check \"src/**/*.ts\"",
-    "lint": "eslint '**/*.{js,ts,jsx}' --fix",
-    "prepare": "husky"
+    "prepare": "husky install",
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
@@ -44,6 +45,12 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "frontend/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write",
+      "eslint --fix"
     ]
   }
 }
