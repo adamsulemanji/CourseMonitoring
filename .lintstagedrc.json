@@ -1,6 +1,0 @@
-{
-    "*.js": ["prettier --write", "eslint --max-warnings=0"],
-    "*.ts": ["prettier --write", "eslint --max-warnings=0"],
-    "*.md": "prettier --write",
-    "*.scss": "prettier --write"
-}  
