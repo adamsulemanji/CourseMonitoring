@@ -1,19 +1,14 @@
-import React from 'react'
-import axios from 'axios'
-import { Link } from 'react-router-dom'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-    CognitoUserPool,
-    CognitoUser,
-    AuthenticationDetails,
-} from 'amazon-cognito-identity-js'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { CognitoUserPool } from 'amazon-cognito-identity-js'
 import axios from 'axios'
 
 const poolData = {
     UserPoolId: 'us-east-1_tQOjzQocV',
-    ClientId: '4ndqe4ft3kej4g7lbhn8u5r7a1',
+    ClientId: '3le5isv0lr9th52o7lvva1p1ih',
 }
+
+const userPool = new CognitoUserPool(poolData)
 
 function Signup() {
     const navigate = useNavigate()
@@ -29,24 +24,70 @@ function Signup() {
     })
 
     const onChange = e => {
-        console.log('Form input changed')
         setFormInput({ ...formInput, [e.target.name]: e.target.value })
     }
 
-    const onSubmit = async e => {
-        console.log('Form submitted')
-        console.log(formInput)
+    const onSubmit = e => {
         e.preventDefault()
 
-        axios.post('/api/user/register', formInput).then(res => {
-            if (res.data.errors) {
-                setAlert(true)
-                setAlertResponse(res.data.errors)
-            } else {
-                console.log(res.data)
-                navigate('/login')
+        if (formInput.email !== formInput.confirmEmail) {
+            setAlert(true)
+            setAlertResponse("Emails don't match")
+            return
+        }
+
+        if (formInput.password !== formInput.confirmPassword) {
+            setAlert(true)
+            setAlertResponse("Passwords don't match")
+            return
+        }
+
+        // Use Cognito to sign up
+        userPool.signUp(
+            formInput.email,
+            formInput.password,
+            [
+                { Name: 'phone_number', Value: formInput.phone },
+                { Name: 'email', Value: formInput.email },
+            ],
+            null,
+            async (err, result) => {
+                if (err) {
+                    setAlert(true)
+                    setAlertResponse(err.message || JSON.stringify(err))
+                    return
+                }
+                console.log('User registered successfully:', result.user)
+
+                try {
+                    const res = await axios.post(
+                        'https://sjzmj7xm3e.execute-api.us-east-1.amazonaws.com/prod/users',
+                        {
+                            email: formInput.email,
+                            phone: formInput.phone,
+                        }
+                    )
+
+                    if (res.status === 201) {
+                        console.log('User saved to database')
+                        navigate('/login')
+                    } else {
+                        console.error(
+                            'Failed to save user to the database:',
+                            res
+                        )
+                        setAlert(true)
+                        setAlertResponse('Failed to save user to the database')
+                    }
+                } catch (error) {
+                    console.error('Error occurred while saving user:', error)
+                    setAlert(true)
+                    setAlertResponse(
+                        'Error occurred while saving user to the database'
+                    )
+                }
             }
-        })
+        )
     }
 
     return (
@@ -77,12 +118,11 @@ function Signup() {
                             )}
                             <form
                                 className="space-y-4 md:space-y-6"
-                                action="#"
                                 onSubmit={onSubmit}
                             >
                                 <div>
                                     <label
-                                        for="email"
+                                        htmlFor="email"
                                         className="block mb-2 text-sm font-medium text-gray-900"
                                     >
                                         Your email
@@ -95,28 +135,28 @@ function Signup() {
                                         placeholder="name@company.com"
                                         required=""
                                         onChange={onChange}
-                                    ></input>
+                                    />
                                 </div>
                                 <div>
                                     <label
-                                        for="confirmEmail"
+                                        htmlFor="confirmEmail"
                                         className="block mb-2 text-sm font-medium text-gray-900"
                                     >
                                         Confirm email
                                     </label>
                                     <input
-                                        type="confirmEmail"
+                                        type="email"
                                         name="confirmEmail"
                                         id="confirmEmail"
                                         className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                         placeholder="name@company.com"
                                         required=""
                                         onChange={onChange}
-                                    ></input>
+                                    />
                                 </div>
                                 <div>
                                     <label
-                                        for="password"
+                                        htmlFor="password"
                                         className="block mb-2 text-sm font-medium text-gray-900"
                                     >
                                         Password
@@ -129,11 +169,11 @@ function Signup() {
                                         className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                         required=""
                                         onChange={onChange}
-                                    ></input>
+                                    />
                                 </div>
                                 <div>
                                     <label
-                                        for="confirmPassword"
+                                        htmlFor="confirmPassword"
                                         className="block mb-2 text-sm font-medium text-gray-900"
                                     >
                                         Confirm Password
@@ -146,11 +186,11 @@ function Signup() {
                                         className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                         required=""
                                         onChange={onChange}
-                                    ></input>
+                                    />
                                 </div>
                                 <div>
                                     <label
-                                        for="phone"
+                                        htmlFor="phone"
                                         className="block mb-2 text-sm font-medium text-gray-900"
                                     >
                                         Phone Number
@@ -162,10 +202,10 @@ function Signup() {
                                         className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                         required=""
                                         onChange={onChange}
-                                    ></input>
+                                    />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <button className=" block w-full bg-purple-900 text-white p-3 rounded-lg font-bolded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2">
+                                    <button className="block w-full bg-purple-900 text-white p-3 rounded-lg font-bold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2">
                                         Submit
                                     </button>
                                 </div>
@@ -180,12 +220,6 @@ function Signup() {
                                 </p>
                             </form>
                         </div>
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-5">
-                            &copy; 2023 All rights reserved. Created by Adam
-                            Sulemanji
-                        </p>
                     </div>
                 </div>
             </section>

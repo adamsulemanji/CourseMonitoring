@@ -37,11 +37,14 @@ const handler = async (event) => {
             body: JSON.stringify({ message: 'Email is required' }),
           };
         }
+
+        const UUID = generateUUID();
         const createUserParams = {
           TableName: userTableName,
           Item: {
-            userId: { S: generateUUID() },
+            userId: { S: UUID },
             email: { S: requestBody.email },
+            phone: { S: requestBody.phone || '' },
             classes: { L: [] },
           },
         };
@@ -49,7 +52,10 @@ const handler = async (event) => {
         return {
           statusCode: 201,
           headers: responseHeaders,
-          body: JSON.stringify({ message: 'New User Created' }),
+          body: JSON.stringify({ 
+            message: 'New User Created',
+            userId: UUID,
+          }),
         };
 
       case httpMethod === 'GET' && resourcePath === '/users':
