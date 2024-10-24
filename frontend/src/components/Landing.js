@@ -4,7 +4,6 @@ import React from 'react';
 function Landing() {
     return (
         <div>
-            {/* style the landing page and make a link to the sign in page using tailwind*/}
             <section className="bg-gray-50">
                 <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
                     <a

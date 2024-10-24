@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CognitoUser } from 'amazon-cognito-identity-js';
+import { UserContext } from '../../App';
 import userPool from '../../config/cognitoPool';
 
 function Verify() {
-    const [email, setEmail] = useState('');
+    const { userID, setUserID, email, setEmail } = useContext(UserContext);
     const [verificationCode, setVerificationCode] = useState('');
     const [message, setMessage] = useState('');
     const navigator = useNavigate();
@@ -21,11 +22,26 @@ function Verify() {
                 if (err.code === 'ExpiredCodeException') {
                     resendVerificationCode();
                 }
-            } else {
+            } else if (result === 'SUCCESS') {
+                user.getUserAttributes((err, attributes) => {
+                    if (err) {
+                        setMessage(
+                            `Error fetching user attributes: ${err.message}`
+                        );
+                    } else {
+                        const subAttr = attributes.find(
+                            attr => attr.Name === 'sub'
+                        );
+                        setUserID(subAttr.Value);
+                        setEmail(email);
+                    }
+                });
                 setMessage('Verification successful! Redirecting you to home.');
                 setTimeout(() => {
                     navigator('/home');
                 }, 5000);
+            } else {
+                setMessage('Verification failed. Please try again.');
             }
         });
     };

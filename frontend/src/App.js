@@ -10,11 +10,17 @@ import VerifyEmail from './components/auth/Verify';
 export const UserContext = React.createContext(null);
 
 function App() {
-    const [userID, setUserID] = useState();
+    const [userID, setUserID] = useState('');
+    const [email, setEmail] = useState('');
     return (
         <Router>
             <UserContext.Provider
-                value={{ userID: userID, setUserID: setUserID }}
+                value={{
+                    userID: userID,
+                    setUserID: setUserID,
+                    email: email,
+                    setEmail: setEmail,
+                }}
             >
                 <div>
                     <Routes>
@@ -22,8 +28,8 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/home" element={<Home />} />
                         <Route path="/signup" element={<Signup />} />
-                        <Route path="*" element={<ErrorPage />} />
                         <Route path="/verify" element={<VerifyEmail />} />
+                        <Route path="*" element={<ErrorPage />} />
                     </Routes>
                 </div>
             </UserContext.Provider>

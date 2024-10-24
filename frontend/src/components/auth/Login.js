@@ -9,8 +9,9 @@ function Login() {
         email: '',
         password: '',
     });
-    const { userID, setUserID } = useContext(UserContext);
+    const { userID, setUserID, email, setEmail } = useContext(UserContext);
     const [alert, setAlert] = useState(false);
+    const [message, setMessage] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
     const navigate = useNavigate();
 
@@ -18,7 +19,7 @@ function Login() {
         setUser({ ...user, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = e => {
+    const handleSubmit = async e => {
         e.preventDefault();
 
         const authenticationDetails = new AuthenticationDetails({
@@ -31,48 +32,57 @@ function Login() {
             Pool: userPool,
         });
 
-        cognitoUser.authenticateUser(authenticationDetails, {
-            onSuccess: result => {
-                console.log('Authentication successful');
-                const token = result.getIdToken().getJwtToken();
+        try {
+            const result = await new Promise((resolve, reject) => {
+                cognitoUser.authenticateUser(authenticationDetails, {
+                    onSuccess: resolve,
+                    onFailure: reject,
+                });
+            });
 
-                sessionStorage.setItem('jwtToken', token);
-
+            const attributes = await new Promise((resolve, reject) => {
                 cognitoUser.getUserAttributes((err, attributes) => {
+                    if (err) reject(err);
+                    else resolve(attributes);
+                });
+            });
+
+            const emailVerifiedAttr = attributes.find(
+                attr => attr.Name === 'email_verified'
+            );
+            const isEmailVerified = emailVerifiedAttr?.Value === 'true';
+
+            if (isEmailVerified) {
+                const subAttr = attributes.find(attr => attr.Name === 'sub');
+                const userId = subAttr.Value;
+
+                // Set context values before navigation
+                setUserID(userId);
+                setEmail(user.email);
+
+                navigate('/home');
+            } else {
+                cognitoUser.resendConfirmationCode(err => {
                     if (err) {
-                        console.error(
-                            'Error fetching attributes:',
-                            err.message
+                        setAlertMessage(
+                            `Resending verification code failed: ${err.message}`
                         );
                         setAlert(true);
-                        setAlertMessage('Error fetching user attributes.');
                     } else {
-                        const emailVerifiedAttr = attributes.find(
-                            attr => attr.Name === 'email_verified'
+                        setAlertMessage(
+                            'Verification code resent successfully.'
                         );
-                        const isEmailVerified =
-                            emailVerifiedAttr &&
-                            emailVerifiedAttr.Value === 'true';
-
-                        if (isEmailVerified) {
-                            navigate('/home');
-                        } else {
-                            navigate('/verify');
-                        }
+                        setAlert(true);
+                        setTimeout(() => navigate('/verify'), 2000);
                     }
                 });
-            },
-            onFailure: err => {
-                console.error(
-                    'Authentication failed:',
-                    err.message || JSON.stringify(err)
-                );
-                setAlert(true);
-                setAlertMessage(
-                    'Incorrect email or password. Please try again.'
-                );
-            },
-        });
+            }
+        } catch (err) {
+            console.error('Authentication failed:', err);
+            setAlert(true);
+            setAlertMessage('Incorrect email or password. Please try again.');
+            setTimeout(() => setAlert(false), 10000);
+        }
     };
 
     return (

@@ -1,97 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { CognitoUser } from 'amazon-cognito-identity-js';
 import ClassCard from './ClassCard';
 import { Navbar, Nav, NavItem } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import userPool from '../config/cognitoPool'; // Import your user pool configuration
+import userPool from '../config/cognitoPool';
+import { UserContext } from '../App';
 
 function Home() {
     const [classes, setClasses] = useState([]);
-    const [user, setUser] = useState({});
-    const [userId, setUserId] = useState(null);
+    const { userID, setUserID, email, setEmail } = useContext(UserContext);
     const [addingClass, setAddingClass] = useState(false);
     const navigate = useNavigate();
 
+    console.log('User ID:', userID);
+
     useEffect(() => {
-        const token = sessionStorage.getItem('jwtToken');
-        if (token) {
-            try {
-                const decodedUser = jwtDecode(token);
-                setUserId(decodedUser.sub);
-                setUser(decodedUser);
+        const tokenKey = `CognitoIdentityServiceProvider.${userPool.clientId}.${userID}.idToken`;
 
-                // Verify user session via Cognito
-                const cognitoUser = new CognitoUser({
-                    Username: decodedUser.email,
-                    Pool: userPool,
-                });
+        console.log('Token key:', tokenKey);
+        console.log('userID:', userID);
+        console.log('email:', email);
+        console.log('userPool:', userPool);
 
-                cognitoUser.getSession((err, session) => {
-                    if (err || !session.isValid()) {
-                        console.error('Session invalid:', err);
-                        sessionStorage.removeItem('jwtToken');
-                        navigate('/login'); // Redirect to login if session is invalid
-                    } else {
-                        // Fetch classes if the session is valid
-                        fetchClasses(decodedUser.sub);
-                    }
-                });
-            } catch (error) {
-                console.error('Invalid token:', error);
-                sessionStorage.removeItem('jwtToken');
-                navigate('/login'); // Redirect to login if token is invalid
-            }
-        } else {
-            navigate('/login'); // Redirect to login if no token is found
+        if (!userID || !email) {
+            navigate('/login');
+            return;
         }
-    }, [navigate]);
+    }, [userID, email, setUserID, setEmail, navigate]);
 
     const fetchClasses = async userId => {
-        try {
-            const response = await axios.get(`/api/class/user/${userId}`);
-            setClasses(response.data);
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-        }
+        console.log('Fetching classes for user:', userId);
     };
 
     const handleSaveClass = async classData => {
-        const classToSave = { ...classData, user: userId };
-
-        try {
-            let response;
-            if (classData._id) {
-                response = await axios.put(
-                    `/api/class/update/${classData._id}`,
-                    classToSave
-                );
-                setClasses(
-                    classes.map(classObj =>
-                        classObj._id === classData._id
-                            ? response.data
-                            : classObj
-                    )
-                );
-            } else {
-                response = await axios.post('/api/class/create', classToSave);
-                setClasses([...classes, response.data]);
-            }
-            setAddingClass(false);
-        } catch (error) {
-            console.error('Error saving the class:', error.response);
-        }
+        console.log('Saving class:', classData);
     };
 
     const handleDeleteClass = async classId => {
-        try {
-            await axios.delete(`/api/class/delete/${classId}`);
-            setClasses(classes.filter(classObj => classObj._id !== classId));
-        } catch (error) {
-            console.error('Error deleting class:', error);
-        }
+        console.log('Deleting class:', classId);
     };
+
+    const handleLogout = () => {
+        setUserID('');
+        setEmail('');
+        navigate('/login');
+    };
+
+    if (!userID || !email) {
+        return null;
+    }
 
     return (
         <div>
@@ -104,14 +63,7 @@ function Home() {
                             <Nav.Link href="/home">Home</Nav.Link>
                         </NavItem>
                         <NavItem>
-                            <Nav.Link
-                                onClick={() => {
-                                    sessionStorage.removeItem('jwtToken');
-                                    window.location.href = '/login';
-                                }}
-                            >
-                                Logout
-                            </Nav.Link>
+                            <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
                         </NavItem>
                     </Nav>
                 </Navbar.Collapse>
@@ -123,7 +75,7 @@ function Home() {
                         <h1 className="text-3xl">
                             Welcome{' '}
                             <i>
-                                <b>{user.email}</b>
+                                <b>{email}</b>
                             </i>{' '}
                             to Course Monitoring
                         </h1>

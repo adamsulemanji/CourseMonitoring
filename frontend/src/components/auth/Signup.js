@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import userPool from '../../config/cognitoPool';
+import { UserContext } from '../../App';
 
 function Signup() {
+    const { userID, setUserID, email, setEmail } = useContext(UserContext);
     const navigate = useNavigate();
     const [alert, setAlert] = useState(false);
     const [alertResponse, setAlertResponse] = useState('');
@@ -51,34 +53,35 @@ function Signup() {
                     return;
                 }
                 console.log('User registered successfully:', result.user);
+                navigate('/verify');
 
-                try {
-                    const res = await axios.post(
-                        'https://sjzmj7xm3e.execute-api.us-east-1.amazonaws.com/prod/users',
-                        {
-                            email: formInput.email,
-                            phone: formInput.phone,
-                        }
-                    );
+                // try {
+                //     const res = await axios.post(
+                //         'https://sjzmj7xm3e.execute-api.us-east-1.amazonaws.com/prod/users',
+                //         {
+                //             email: formInput.email,
+                //             phone: formInput.phone,
+                //         }
+                //     );
 
-                    if (res.status === 201) {
-                        console.log('User saved to database');
-                        navigate('/verify');
-                    } else {
-                        console.error(
-                            'Failed to save user to the database:',
-                            res
-                        );
-                        setAlert(true);
-                        setAlertResponse('Failed to save user to the database');
-                    }
-                } catch (error) {
-                    console.error('Error occurred while saving user:', error);
-                    setAlert(true);
-                    setAlertResponse(
-                        'Error occurred while saving user to the database'
-                    );
-                }
+                //     if (res.status === 201) {
+                //         console.log('User saved to database');
+                //         navigate('/verify');
+                //     } else {
+                //         console.error(
+                //             'Failed to save user to the database:',
+                //             res
+                //         );
+                //         setAlert(true);
+                //         setAlertResponse('Failed to save user to the database');
+                //     }
+                // } catch (error) {
+                //     console.error('Error occurred while saving user:', error);
+                //     setAlert(true);
+                //     setAlertResponse(
+                //         'Error occurred while saving user to the database'
+                //     );
+                // }
             }
         );
     };
