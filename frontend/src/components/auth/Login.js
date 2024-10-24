@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js'
 import userPool from '../../config/cognitoPool'
+import { UserContext } from '../../App'
 
 function Login() {
     const [user, setUser] = useState({

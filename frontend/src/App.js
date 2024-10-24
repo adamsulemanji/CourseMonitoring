@@ -10,10 +10,12 @@ import VerifyEmail from './components/auth/Verify'
 export const UserContext = React.createContext(null)
 
 function App() {
-    const [user, setUser] = useState()
+    const [userID, setUserID] = useState()
     return (
         <Router>
-            <UserContext.Provider value={{ user: user, setUser: setUser }}>
+            <UserContext.Provider
+                value={{ userID: userID, setUserID: setUserID }}
+            >
                 <div>
                     <Routes>
                         <Route path="/" element={<Landing />} />
