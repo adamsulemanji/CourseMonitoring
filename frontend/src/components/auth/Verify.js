@@ -18,12 +18,29 @@ function Verify() {
         user.confirmRegistration(verificationCode, true, (err, result) => {
             if (err) {
                 setMessage(`Verification failed: ${err.message}`)
-                return
+                if (err.code === 'ExpiredCodeException') {
+                    resendVerificationCode()
+                }
+            } else {
+                setMessage('Verification successful! Redirecting you to home.')
+                setTimeout(() => {
+                    navigator('/home')
+                }, 5000)
             }
-            setMessage('Verification successful! Redirecting you to home.')
-            setTimeout(() => {
-                navigator('/home')
-            }, 2000)
+        })
+    }
+
+    const resendVerificationCode = () => {
+        const user = new CognitoUser({
+            Username: email,
+            Pool: userPool,
+        })
+
+        user.resendConfirmationCode((err, result) => {
+            if (err) {
+                setMessage(`Resending verification code failed: ${err.message}`)
+            }
+            setMessage('Verification code resent successfully.')
         })
     }
 

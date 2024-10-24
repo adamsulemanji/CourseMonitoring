@@ -1,65 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { jwtDecode } from 'jwt-decode' // This was corrected from your import statement
-import ClassCard from './ClassCard';
-import { Navbar, Nav, NavItem } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
+import { CognitoUser } from 'amazon-cognito-identity-js'
+import ClassCard from './ClassCard'
+import { Navbar, Nav, NavItem } from 'react-bootstrap'
+import { useNavigate } from 'react-router-dom'
+import userPool from '../config/cognitoPool' // Import your user pool configuration
 
 function Home() {
-    const [classes, setClasses] = useState([]);
-    const [user, setUser] = useState({});
-    const [userId, setUserId] = useState(null);
-    const [addingClass, setAddingClass] = useState(false);
+    const [classes, setClasses] = useState([])
+    const [user, setUser] = useState({})
+    const [userId, setUserId] = useState(null)
+    const [addingClass, setAddingClass] = useState(false)
+    const navigate = useNavigate()
 
     useEffect(() => {
-        const token = sessionStorage.getItem('jwtToken');
+        const token = sessionStorage.getItem('jwtToken')
         if (token) {
-            const decodedUser = jwtDecode(token.replace('Bearer ', ''));
-            setUserId(decodedUser._id);
-            setUser(decodedUser);
+            try {
+                const decodedUser = jwtDecode(token)
+                setUserId(decodedUser.sub)
+                setUser(decodedUser)
 
-            fetchClasses(decodedUser._id);
-        }
-    }, []);
+                // Verify user session via Cognito
+                const cognitoUser = new CognitoUser({
+                    Username: decodedUser.email,
+                    Pool: userPool,
+                })
 
-    const fetchClasses = async (userId) => {
-        try {
-            const response = await axios.get(`/api/class/user/${userId}`);
-            setClasses(response.data);
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-        }
-    };
-
-    const handleSaveClass = async (classData) => {
-        const classToSave = { ...classData, user: userId };
-
-        try {
-            let response;
-            if (classData._id) {
-                response = await axios.put(`/api/class/update/${classData._id}`, classToSave);
-                setClasses(
-                    classes.map((classObj) =>
-                        classObj._id === classData._id ? response.data : classObj
-                    )
-                );
-            } else {
-                response = await axios.post('/api/class/create', classToSave);
-                setClasses([...classes, response.data]);
+                cognitoUser.getSession((err, session) => {
+                    if (err || !session.isValid()) {
+                        console.error('Session invalid:', err)
+                        sessionStorage.removeItem('jwtToken')
+                        navigate('/login') // Redirect to login if session is invalid
+                    } else {
+                        // Fetch classes if the session is valid
+                        fetchClasses(decodedUser.sub)
+                    }
+                })
+            } catch (error) {
+                console.error('Invalid token:', error)
+                sessionStorage.removeItem('jwtToken')
+                navigate('/login') // Redirect to login if token is invalid
             }
-            setAddingClass(false);
-        } catch (error) {
-            console.error('Error saving the class:', error.response);
+        } else {
+            navigate('/login') // Redirect to login if no token is found
         }
-    };
+    }, [navigate])
 
-    const handleDeleteClass = async (classId) => {
+    const fetchClasses = async userId => {
         try {
-            await axios.delete(`/api/class/delete/${classId}`);
-            setClasses(classes.filter((classObj) => classObj._id !== classId));
+            const response = await axios.get(`/api/class/user/${userId}`)
+            setClasses(response.data)
         } catch (error) {
-            console.error('Error deleting class:', error);
+            console.error('Error fetching classes:', error)
         }
-    };
+    }
+
+    const handleSaveClass = async classData => {
+        const classToSave = { ...classData, user: userId }
+
+        try {
+            let response
+            if (classData._id) {
+                response = await axios.put(
+                    `/api/class/update/${classData._id}`,
+                    classToSave
+                )
+                setClasses(
+                    classes.map(classObj =>
+                        classObj._id === classData._id
+                            ? response.data
+                            : classObj
+                    )
+                )
+            } else {
+                response = await axios.post('/api/class/create', classToSave)
+                setClasses([...classes, response.data])
+            }
+            setAddingClass(false)
+        } catch (error) {
+            console.error('Error saving the class:', error.response)
+        }
+    }
+
+    const handleDeleteClass = async classId => {
+        try {
+            await axios.delete(`/api/class/delete/${classId}`)
+            setClasses(classes.filter(classObj => classObj._id !== classId))
+        } catch (error) {
+            console.error('Error deleting class:', error)
+        }
+    }
 
     return (
         <div>
@@ -74,8 +106,8 @@ function Home() {
                         <NavItem>
                             <Nav.Link
                                 onClick={() => {
-                                    sessionStorage.removeItem('jwtToken');
-                                    window.location.href = '/login';
+                                    sessionStorage.removeItem('jwtToken')
+                                    window.location.href = '/login'
                                 }}
                             >
                                 Logout
@@ -89,16 +121,22 @@ function Home() {
                 <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:py-0">
                     <div className="text-center my-8">
                         <h1 className="text-3xl">
-                            Welcome <i><b>{user.email}</b></i> to Course Monitoring
+                            Welcome{' '}
+                            <i>
+                                <b>{user.email}</b>
+                            </i>{' '}
+                            to Course Monitoring
                         </h1>
                     </div>
 
                     {classes.length === 0 ? (
                         <div className="text-center">
-                            <p className="text-lg font-semibold text-gray-700">No tracking classes</p>
+                            <p className="text-lg font-semibold text-gray-700">
+                                No tracking classes
+                            </p>
                         </div>
                     ) : (
-                        classes.map((classObj) => (
+                        classes.map(classObj => (
                             <ClassCard
                                 key={classObj._id}
                                 classObj={classObj}
@@ -125,11 +163,13 @@ function Home() {
                 </div>
 
                 <div className="text-center my-8">
-                    <p className="text-sm font-semibold text-gray-700">Powered by Adam Sulemanji</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                        Powered by Adam Sulemanji
+                    </p>
                 </div>
             </section>
         </div>
-    );
+    )
 }
 
-export default Home;
+export default Home

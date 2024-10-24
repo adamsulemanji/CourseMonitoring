@@ -9,7 +9,8 @@ function Login() {
         password: '',
     })
     const [alert, setAlert] = useState(false)
-    const navigator = useNavigate()
+    const [alertMessage, setAlertMessage] = useState('')
+    const navigate = useNavigate()
 
     const onChange = e => {
         setUser({ ...user, [e.target.name]: e.target.value })
@@ -32,8 +33,29 @@ function Login() {
             onSuccess: result => {
                 console.log('Authentication successful')
                 const token = result.getIdToken().getJwtToken()
-                sessionStorage.setItem('jwtToken', JSON.stringify(token))
-                navigator('/verify')
+
+                sessionStorage.setItem('jwtToken', token)
+
+                cognitoUser.getUserAttributes((err, attributes) => {
+                    if (err) {
+                        console.error('Error fetching attributes:', err.message)
+                        setAlert(true)
+                        setAlertMessage('Error fetching user attributes.')
+                    } else {
+                        const emailVerifiedAttr = attributes.find(
+                            attr => attr.Name === 'email_verified'
+                        )
+                        const isEmailVerified =
+                            emailVerifiedAttr &&
+                            emailVerifiedAttr.Value === 'true'
+
+                        if (isEmailVerified) {
+                            navigate('/home')
+                        } else {
+                            navigate('/verify')
+                        }
+                    }
+                })
             },
             onFailure: err => {
                 console.error(
@@ -41,6 +63,9 @@ function Login() {
                     err.message || JSON.stringify(err)
                 )
                 setAlert(true)
+                setAlertMessage(
+                    'Incorrect email or password. Please try again.'
+                )
             },
         })
     }
@@ -66,9 +91,8 @@ function Login() {
                                     role="alert"
                                 >
                                     <span className="font-medium">
-                                        Incorrect Email or Password!
-                                    </span>{' '}
-                                    Please try again.
+                                        {alertMessage}
+                                    </span>
                                 </div>
                             )}
                             <form
