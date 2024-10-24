@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import Landing from './components/Landing'
-import Login from './components/Login'
+import Login from './components/auth/Login'
 import Home from './components/Home'
-import Signup from './components/Signup'
+import Signup from './components/auth/Signup'
 import ErrorPage from './components/ErrorPage'
-import VerifyEmail from './components/Verify'
+import VerifyEmail from './components/auth/Verify'
 
 function App() {
     return (

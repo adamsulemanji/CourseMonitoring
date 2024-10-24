@@ -1,14 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CognitoUserPool } from 'amazon-cognito-identity-js'
 import axios from 'axios'
-
-const poolData = {
-    UserPoolId: 'us-east-1_tQOjzQocV',
-    ClientId: '3le5isv0lr9th52o7lvva1p1ih',
-}
-
-const userPool = new CognitoUserPool(poolData)
+import userPool from '../../config/cognitoPool'
 
 function Signup() {
     const navigate = useNavigate()
@@ -70,7 +63,7 @@ function Signup() {
 
                     if (res.status === 201) {
                         console.log('User saved to database')
-                        navigate('/login')
+                        navigate('/verify')
                     } else {
                         console.error(
                             'Failed to save user to the database:',

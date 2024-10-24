@@ -1,17 +1,7 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-    CognitoUserPool,
-    CognitoUser,
-    AuthenticationDetails,
-} from 'amazon-cognito-identity-js'
-
-const poolData = {
-    UserPoolId: 'us-east-1_tQOjzQocV',
-    ClientId: '3le5isv0lr9th52o7lvva1p1ih',
-}
-
-const userPool = new CognitoUserPool(poolData)
+import { Link, useNavigate } from 'react-router-dom'
+import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js'
+import userPool from '../../config/cognitoPool'
 
 function Login() {
     const [user, setUser] = useState({
@@ -19,6 +9,7 @@ function Login() {
         password: '',
     })
     const [alert, setAlert] = useState(false)
+    const navigator = useNavigate()
 
     const onChange = e => {
         setUser({ ...user, [e.target.name]: e.target.value })
@@ -42,7 +33,7 @@ function Login() {
                 console.log('Authentication successful')
                 const token = result.getIdToken().getJwtToken()
                 sessionStorage.setItem('jwtToken', JSON.stringify(token))
-                window.location.href = '/home'
+                navigator('/verify')
             },
             onFailure: err => {
                 console.error(
