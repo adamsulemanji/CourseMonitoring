@@ -56,7 +56,6 @@ function Login() {
                 const subAttr = attributes.find(attr => attr.Name === 'sub');
                 const userId = subAttr.Value;
 
-                // Set context values before navigation
                 setUserID(userId);
                 setEmail(user.email);
 

@@ -106,7 +106,7 @@ function Verify() {
                                         id="email"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
-                                        placeholder="Email"
+                                        placeholder={email}
                                         required
                                         className="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md focus:border-purple-500 focus:outline-none focus:ring"
                                     />

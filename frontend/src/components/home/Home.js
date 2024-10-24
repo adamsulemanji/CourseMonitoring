@@ -5,8 +5,8 @@ import { CognitoUser } from 'amazon-cognito-identity-js';
 import ClassCard from './ClassCard';
 import { Navbar, Nav, NavItem } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import userPool from '../config/cognitoPool';
-import { UserContext } from '../App';
+import userPool from '../../config/cognitoPool';
+import { UserContext } from '../../App';
 
 function Home() {
     const [classes, setClasses] = useState([]);

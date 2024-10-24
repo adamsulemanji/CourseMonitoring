@@ -2,9 +2,9 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useState } from 'react';
 import Landing from './components/Landing';
 import Login from './components/auth/Login';
-import Home from './components/Home';
+import Home from './components/home/Home';
 import Signup from './components/auth/Signup';
-import ErrorPage from './components/ErrorPage';
+import ErrorPage from './components/home/ErrorPage';
 import VerifyEmail from './components/auth/Verify';
 
 export const UserContext = React.createContext(null);
