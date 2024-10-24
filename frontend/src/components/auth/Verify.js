@@ -1,48 +1,50 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { CognitoUser } from 'amazon-cognito-identity-js'
-import userPool from '../../config/cognitoPool'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CognitoUser } from 'amazon-cognito-identity-js';
+import userPool from '../../config/cognitoPool';
 
 function Verify() {
-    const [email, setEmail] = useState('')
-    const [verificationCode, setVerificationCode] = useState('')
-    const [message, setMessage] = useState('')
-    const navigator = useNavigate()
+    const [email, setEmail] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
+    const [message, setMessage] = useState('');
+    const navigator = useNavigate();
 
     const handleVerification = () => {
         const user = new CognitoUser({
             Username: email,
             Pool: userPool,
-        })
+        });
 
         user.confirmRegistration(verificationCode, true, (err, result) => {
             if (err) {
-                setMessage(`Verification failed: ${err.message}`)
+                setMessage(`Verification failed: ${err.message}`);
                 if (err.code === 'ExpiredCodeException') {
-                    resendVerificationCode()
+                    resendVerificationCode();
                 }
             } else {
-                setMessage('Verification successful! Redirecting you to home.')
+                setMessage('Verification successful! Redirecting you to home.');
                 setTimeout(() => {
-                    navigator('/home')
-                }, 5000)
+                    navigator('/home');
+                }, 5000);
             }
-        })
-    }
+        });
+    };
 
     const resendVerificationCode = () => {
         const user = new CognitoUser({
             Username: email,
             Pool: userPool,
-        })
+        });
 
         user.resendConfirmationCode((err, result) => {
             if (err) {
-                setMessage(`Resending verification code failed: ${err.message}`)
+                setMessage(
+                    `Resending verification code failed: ${err.message}`
+                );
             }
-            setMessage('Verification code resent successfully.')
-        })
-    }
+            setMessage('Verification code resent successfully.');
+        });
+    };
 
     return (
         <div>
@@ -72,8 +74,8 @@ function Verify() {
                             <form
                                 className="space-y-4 md:space-y-6"
                                 onSubmit={e => {
-                                    e.preventDefault()
-                                    handleVerification()
+                                    e.preventDefault();
+                                    handleVerification();
                                 }}
                             >
                                 <div className="flex flex-col space-y-1">
@@ -126,7 +128,7 @@ function Verify() {
                 </div>
             </section>
         </div>
-    )
+    );
 }
 
-export default Verify
+export default Verify;

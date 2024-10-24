@@ -1,16 +1,16 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import React, { useState } from 'react'
-import Landing from './components/Landing'
-import Login from './components/auth/Login'
-import Home from './components/Home'
-import Signup from './components/auth/Signup'
-import ErrorPage from './components/ErrorPage'
-import VerifyEmail from './components/auth/Verify'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React, { useState } from 'react';
+import Landing from './components/Landing';
+import Login from './components/auth/Login';
+import Home from './components/Home';
+import Signup from './components/auth/Signup';
+import ErrorPage from './components/ErrorPage';
+import VerifyEmail from './components/auth/Verify';
 
-export const UserContext = React.createContext(null)
+export const UserContext = React.createContext(null);
 
 function App() {
-    const [userID, setUserID] = useState()
+    const [userID, setUserID] = useState();
     return (
         <Router>
             <UserContext.Provider
@@ -28,7 +28,7 @@ function App() {
                 </div>
             </UserContext.Provider>
         </Router>
-    )
+    );
 }
 
-export default App
+export default App;

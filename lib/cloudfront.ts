@@ -10,99 +10,112 @@ import * as route53targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 export class FrontendConstruct extends Construct {
-  constructor(app: Construct, id: string) {
-    super(app, id);
-    
-    const domainName = 'adamsulemanji.com';
-    const subDomain = 'courses';
+    constructor(app: Construct, id: string) {
+        super(app, id);
 
-    // ********** Frontend Bucket **********
-    const myBucket = new s3.Bucket(this, `myBucket-${subDomain}`, {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
+        const domainName = 'adamsulemanji.com';
+        const subDomain = 'courses';
 
-    const cloudfrontOAI = new cloudfront.OriginAccessIdentity(
-      this,
-      `cloudfront-OAI-${subDomain}`,
-    );
+        // ********** Frontend Bucket **********
+        const myBucket = new s3.Bucket(this, `myBucket-${subDomain}`, {
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            autoDeleteObjects: true,
+        });
 
-    // ********** Bucket Policy **********
-    myBucket.addToResourcePolicy(
-      new iam.PolicyStatement({
-        actions: ['s3:GetObject'],
-        resources: [myBucket.arnForObjects('*')],
-        principals: [
-          new iam.CanonicalUserPrincipal(
-            cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId,
-          ),
-        ],
-      }),
-    );
+        const cloudfrontOAI = new cloudfront.OriginAccessIdentity(
+            this,
+            `cloudfront-OAI-${subDomain}`
+        );
 
-    // ********** Route 53 **********
-    const zone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-      domainName: domainName,
-    });
+        // ********** Bucket Policy **********
+        myBucket.addToResourcePolicy(
+            new iam.PolicyStatement({
+                actions: ['s3:GetObject'],
+                resources: [myBucket.arnForObjects('*')],
+                principals: [
+                    new iam.CanonicalUserPrincipal(
+                        cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId
+                    ),
+                ],
+            })
+        );
 
-    // ********** ACM Certificate **********
-    const certificate = new acm.Certificate(this, `Certificate-${subDomain}`, {
-      domainName: `${subDomain}.${domainName}`,
-      validation: acm.CertificateValidation.fromDns(zone),
-    });
+        // ********** Route 53 **********
+        const zone = route53.HostedZone.fromLookup(this, 'HostedZone', {
+            domainName: domainName,
+        });
 
-    // ********** CloudFront Distribution **********
-    const s3Origin = new origin.S3Origin(myBucket);
+        // ********** ACM Certificate **********
+        const certificate = new acm.Certificate(
+            this,
+            `Certificate-${subDomain}`,
+            {
+                domainName: `${subDomain}.${domainName}`,
+                validation: acm.CertificateValidation.fromDns(zone),
+            }
+        );
 
-    const distribution = new cloudfront.Distribution(this, `myDist-${subDomain}`, {
-      defaultBehavior: {
-        origin: s3Origin,
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-      },
-      defaultRootObject: 'index.html',
-      domainNames: [`${subDomain}.${domainName}`],
-      certificate,
-      errorResponses: [
-        {
-          httpStatus: 403,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-          ttl: cdk.Duration.minutes(1),
-        },
-        {
-          httpStatus: 404,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-          ttl: cdk.Duration.minutes(1),
-        },
-      ],
-    });
+        // ********** CloudFront Distribution **********
+        const s3Origin = new origin.S3Origin(myBucket);
 
-    // ********** Route 53 Alias Record **********
-    new route53.ARecord(this, `AliasRecord-${subDomain}`, {
-      zone,
-      recordName: `${subDomain}`,
-      target: route53.RecordTarget.fromAlias(
-        new route53targets.CloudFrontTarget(distribution),
-      ),
-    });
+        const distribution = new cloudfront.Distribution(
+            this,
+            `myDist-${subDomain}`,
+            {
+                defaultBehavior: {
+                    origin: s3Origin,
+                    viewerProtocolPolicy:
+                        cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+                },
+                defaultRootObject: 'index.html',
+                domainNames: [`${subDomain}.${domainName}`],
+                certificate,
+                errorResponses: [
+                    {
+                        httpStatus: 403,
+                        responseHttpStatus: 200,
+                        responsePagePath: '/index.html',
+                        ttl: cdk.Duration.minutes(1),
+                    },
+                    {
+                        httpStatus: 404,
+                        responseHttpStatus: 200,
+                        responsePagePath: '/index.html',
+                        ttl: cdk.Duration.minutes(1),
+                    },
+                ],
+            }
+        );
 
-    // ********** Bucket Deployment **********
-    new bucket.BucketDeployment(this, `DeployWithInvalidation-${subDomain}`, {
-      sources: [bucket.Source.asset('./frontend/build')],
-      destinationBucket: myBucket,
-      distribution,
-      memoryLimit: 1024,
-      ephemeralStorageSize: cdk.Size.mebibytes(1024),
-      distributionPaths: ['/*'],
-    });
+        // ********** Route 53 Alias Record **********
+        new route53.ARecord(this, `AliasRecord-${subDomain}`, {
+            zone,
+            recordName: `${subDomain}`,
+            target: route53.RecordTarget.fromAlias(
+                new route53targets.CloudFrontTarget(distribution)
+            ),
+        });
 
-    // ********** Output **********
-    new cdk.CfnOutput(this, `DistributionDomainName-${subDomain}`, {
-      value: distribution.domainName,
-      description: `Distribution Domain Name for ${subDomain}`,
-      exportName: `DistributionDomainName-${subDomain}`,
-    });
-  }
+        // ********** Bucket Deployment **********
+        new bucket.BucketDeployment(
+            this,
+            `DeployWithInvalidation-${subDomain}`,
+            {
+                sources: [bucket.Source.asset('./frontend/build')],
+                destinationBucket: myBucket,
+                distribution,
+                memoryLimit: 1024,
+                ephemeralStorageSize: cdk.Size.mebibytes(1024),
+                distributionPaths: ['/*'],
+            }
+        );
+
+        // ********** Output **********
+        new cdk.CfnOutput(this, `DistributionDomainName-${subDomain}`, {
+            value: distribution.domainName,
+            description: `Distribution Domain Name for ${subDomain}`,
+            exportName: `DistributionDomainName-${subDomain}`,
+        });
+    }
 }

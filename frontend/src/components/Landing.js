@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import React from 'react';
 
-
 function Landing() {
     return (
         <div>
@@ -16,10 +15,13 @@ function Landing() {
                     </a>
                     <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0">
                         <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-                
-                            <div className="p-4 mb-4 text-sm rounded-lg bg-purple-50 flex items-center justify-center" role="alert">
+                            <div
+                                className="p-4 mb-4 text-sm rounded-lg bg-purple-50 flex items-center justify-center"
+                                role="alert"
+                            >
                                 <span className="font-medium">
-                                    This is where the courses list will be displayed
+                                    This is where the courses list will be
+                                    displayed
                                 </span>
                             </div>
                             <Link to="/login">

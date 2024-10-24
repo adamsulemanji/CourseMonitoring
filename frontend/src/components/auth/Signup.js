@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import userPool from '../../config/cognitoPool'
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import userPool from '../../config/cognitoPool';
 
 function Signup() {
-    const navigate = useNavigate()
-    const [alert, setAlert] = useState(false)
-    const [alertResponse, setAlertResponse] = useState('')
+    const navigate = useNavigate();
+    const [alert, setAlert] = useState(false);
+    const [alertResponse, setAlertResponse] = useState('');
 
     const [formInput, setFormInput] = useState({
         email: '',
@@ -14,25 +14,25 @@ function Signup() {
         password: '',
         confirmPassword: '',
         phone: '',
-    })
+    });
 
     const onChange = e => {
-        setFormInput({ ...formInput, [e.target.name]: e.target.value })
-    }
+        setFormInput({ ...formInput, [e.target.name]: e.target.value });
+    };
 
     const onSubmit = e => {
-        e.preventDefault()
+        e.preventDefault();
 
         if (formInput.email !== formInput.confirmEmail) {
-            setAlert(true)
-            setAlertResponse("Emails don't match")
-            return
+            setAlert(true);
+            setAlertResponse("Emails don't match");
+            return;
         }
 
         if (formInput.password !== formInput.confirmPassword) {
-            setAlert(true)
-            setAlertResponse("Passwords don't match")
-            return
+            setAlert(true);
+            setAlertResponse("Passwords don't match");
+            return;
         }
 
         // Use Cognito to sign up
@@ -46,11 +46,11 @@ function Signup() {
             null,
             async (err, result) => {
                 if (err) {
-                    setAlert(true)
-                    setAlertResponse(err.message || JSON.stringify(err))
-                    return
+                    setAlert(true);
+                    setAlertResponse(err.message || JSON.stringify(err));
+                    return;
                 }
-                console.log('User registered successfully:', result.user)
+                console.log('User registered successfully:', result.user);
 
                 try {
                     const res = await axios.post(
@@ -59,29 +59,29 @@ function Signup() {
                             email: formInput.email,
                             phone: formInput.phone,
                         }
-                    )
+                    );
 
                     if (res.status === 201) {
-                        console.log('User saved to database')
-                        navigate('/verify')
+                        console.log('User saved to database');
+                        navigate('/verify');
                     } else {
                         console.error(
                             'Failed to save user to the database:',
                             res
-                        )
-                        setAlert(true)
-                        setAlertResponse('Failed to save user to the database')
+                        );
+                        setAlert(true);
+                        setAlertResponse('Failed to save user to the database');
                     }
                 } catch (error) {
-                    console.error('Error occurred while saving user:', error)
-                    setAlert(true)
+                    console.error('Error occurred while saving user:', error);
+                    setAlert(true);
                     setAlertResponse(
                         'Error occurred while saving user to the database'
-                    )
+                    );
                 }
             }
-        )
-    }
+        );
+    };
 
     return (
         <div>
@@ -217,7 +217,7 @@ function Signup() {
                 </div>
             </section>
         </div>
-    )
+    );
 }
 
-export default Signup
+export default Signup;

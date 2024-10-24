@@ -12,4 +12,4 @@ module.exports = {
         'no-unused-vars': 'warn', // Warn about unused variables
         'sort-imports': ['error', { ignoreDeclarationSort: true }], // Sort imports
     },
-}
+};

@@ -1,12 +1,12 @@
-import { Construct } from 'constructs'
-import * as cognito from 'aws-cdk-lib/aws-cognito'
+import { Construct } from 'constructs';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 export class CognitoConstruct extends Construct {
-    public readonly userPool: cognito.UserPool
-    public readonly userPoolClient: cognito.UserPoolClient
+    public readonly userPool: cognito.UserPool;
+    public readonly userPoolClient: cognito.UserPoolClient;
 
     constructor(scope: Construct, id: string) {
-        super(scope, id)
+        super(scope, id);
 
         // ****** Create a Cognito User Pool ******
         this.userPool = new cognito.UserPool(this, 'CourseMonitoringPool', {
@@ -22,7 +22,7 @@ export class CognitoConstruct extends Construct {
                 requireLowercase: false,
                 requireSymbols: false,
             },
-        })
+        });
 
         // ****** Create a Cognito User Pool Client ******
         this.userPoolClient = new cognito.UserPoolClient(
@@ -36,6 +36,6 @@ export class CognitoConstruct extends Construct {
                 },
                 preventUserExistenceErrors: true,
             }
-        )
+        );
     }
 }

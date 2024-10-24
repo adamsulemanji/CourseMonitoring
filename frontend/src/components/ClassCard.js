@@ -1,29 +1,29 @@
-import React, { useState } from 'react'
-import classnames from 'classnames'
+import React, { useState } from 'react';
+import classnames from 'classnames';
 
 function ClassCard({ classObj = {}, onSave, onCancel, onDelete }) {
     // Determine if this is a new class or an existing class based on the presence of classObj._id
-    const isEditMode = !!classObj._id
+    const isEditMode = !!classObj._id;
     const [classData, setClassData] = useState({
         crn: '',
         semester: 'Spring',
         year: new Date().getFullYear(),
         ...classObj, // If it's edit mode, use the classObj data
-    })
+    });
 
     // Update the state as the user changes form input
     const handleChange = e => {
-        const { name, value } = e.target
+        const { name, value } = e.target;
         setClassData({
             ...classData,
             [name]: value,
-        })
-    }
+        });
+    };
 
     // Save the new or edited class
     const handleSave = () => {
-        onSave(classData)
-    }
+        onSave(classData);
+    };
 
     // Determine button labels and form behavior based on mode
     return (
@@ -142,7 +142,7 @@ function ClassCard({ classObj = {}, onSave, onCancel, onDelete }) {
                 )}
             </form>
         </div>
-    )
+    );
 }
 
-export default ClassCard
+export default ClassCard;

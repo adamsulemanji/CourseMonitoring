@@ -1,97 +1,97 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { jwtDecode } from 'jwt-decode'
-import { CognitoUser } from 'amazon-cognito-identity-js'
-import ClassCard from './ClassCard'
-import { Navbar, Nav, NavItem } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom'
-import userPool from '../config/cognitoPool' // Import your user pool configuration
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import { CognitoUser } from 'amazon-cognito-identity-js';
+import ClassCard from './ClassCard';
+import { Navbar, Nav, NavItem } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import userPool from '../config/cognitoPool'; // Import your user pool configuration
 
 function Home() {
-    const [classes, setClasses] = useState([])
-    const [user, setUser] = useState({})
-    const [userId, setUserId] = useState(null)
-    const [addingClass, setAddingClass] = useState(false)
-    const navigate = useNavigate()
+    const [classes, setClasses] = useState([]);
+    const [user, setUser] = useState({});
+    const [userId, setUserId] = useState(null);
+    const [addingClass, setAddingClass] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const token = sessionStorage.getItem('jwtToken')
+        const token = sessionStorage.getItem('jwtToken');
         if (token) {
             try {
-                const decodedUser = jwtDecode(token)
-                setUserId(decodedUser.sub)
-                setUser(decodedUser)
+                const decodedUser = jwtDecode(token);
+                setUserId(decodedUser.sub);
+                setUser(decodedUser);
 
                 // Verify user session via Cognito
                 const cognitoUser = new CognitoUser({
                     Username: decodedUser.email,
                     Pool: userPool,
-                })
+                });
 
                 cognitoUser.getSession((err, session) => {
                     if (err || !session.isValid()) {
-                        console.error('Session invalid:', err)
-                        sessionStorage.removeItem('jwtToken')
-                        navigate('/login') // Redirect to login if session is invalid
+                        console.error('Session invalid:', err);
+                        sessionStorage.removeItem('jwtToken');
+                        navigate('/login'); // Redirect to login if session is invalid
                     } else {
                         // Fetch classes if the session is valid
-                        fetchClasses(decodedUser.sub)
+                        fetchClasses(decodedUser.sub);
                     }
-                })
+                });
             } catch (error) {
-                console.error('Invalid token:', error)
-                sessionStorage.removeItem('jwtToken')
-                navigate('/login') // Redirect to login if token is invalid
+                console.error('Invalid token:', error);
+                sessionStorage.removeItem('jwtToken');
+                navigate('/login'); // Redirect to login if token is invalid
             }
         } else {
-            navigate('/login') // Redirect to login if no token is found
+            navigate('/login'); // Redirect to login if no token is found
         }
-    }, [navigate])
+    }, [navigate]);
 
     const fetchClasses = async userId => {
         try {
-            const response = await axios.get(`/api/class/user/${userId}`)
-            setClasses(response.data)
+            const response = await axios.get(`/api/class/user/${userId}`);
+            setClasses(response.data);
         } catch (error) {
-            console.error('Error fetching classes:', error)
+            console.error('Error fetching classes:', error);
         }
-    }
+    };
 
     const handleSaveClass = async classData => {
-        const classToSave = { ...classData, user: userId }
+        const classToSave = { ...classData, user: userId };
 
         try {
-            let response
+            let response;
             if (classData._id) {
                 response = await axios.put(
                     `/api/class/update/${classData._id}`,
                     classToSave
-                )
+                );
                 setClasses(
                     classes.map(classObj =>
                         classObj._id === classData._id
                             ? response.data
                             : classObj
                     )
-                )
+                );
             } else {
-                response = await axios.post('/api/class/create', classToSave)
-                setClasses([...classes, response.data])
+                response = await axios.post('/api/class/create', classToSave);
+                setClasses([...classes, response.data]);
             }
-            setAddingClass(false)
+            setAddingClass(false);
         } catch (error) {
-            console.error('Error saving the class:', error.response)
+            console.error('Error saving the class:', error.response);
         }
-    }
+    };
 
     const handleDeleteClass = async classId => {
         try {
-            await axios.delete(`/api/class/delete/${classId}`)
-            setClasses(classes.filter(classObj => classObj._id !== classId))
+            await axios.delete(`/api/class/delete/${classId}`);
+            setClasses(classes.filter(classObj => classObj._id !== classId));
         } catch (error) {
-            console.error('Error deleting class:', error)
+            console.error('Error deleting class:', error);
         }
-    }
+    };
 
     return (
         <div>
@@ -106,8 +106,8 @@ function Home() {
                         <NavItem>
                             <Nav.Link
                                 onClick={() => {
-                                    sessionStorage.removeItem('jwtToken')
-                                    window.location.href = '/login'
+                                    sessionStorage.removeItem('jwtToken');
+                                    window.location.href = '/login';
                                 }}
                             >
                                 Logout
@@ -169,7 +169,7 @@ function Home() {
                 </div>
             </section>
         </div>
-    )
+    );
 }
 
-export default Home
+export default Home;

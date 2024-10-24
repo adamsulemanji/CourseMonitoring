@@ -1,75 +1,79 @@
-import React, { useState, useContext } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js'
-import userPool from '../../config/cognitoPool'
-import { UserContext } from '../../App'
+import React, { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
+import userPool from '../../config/cognitoPool';
+import { UserContext } from '../../App';
 
 function Login() {
     const [user, setUser] = useState({
         email: '',
         password: '',
-    })
-    const [alert, setAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const navigate = useNavigate()
+    });
+    const { userID, setUserID } = useContext(UserContext);
+    const [alert, setAlert] = useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
+    const navigate = useNavigate();
 
     const onChange = e => {
-        setUser({ ...user, [e.target.name]: e.target.value })
-    }
+        setUser({ ...user, [e.target.name]: e.target.value });
+    };
 
     const handleSubmit = e => {
-        e.preventDefault()
+        e.preventDefault();
 
         const authenticationDetails = new AuthenticationDetails({
             Username: user.email,
             Password: user.password,
-        })
+        });
 
         const cognitoUser = new CognitoUser({
             Username: user.email,
             Pool: userPool,
-        })
+        });
 
         cognitoUser.authenticateUser(authenticationDetails, {
             onSuccess: result => {
-                console.log('Authentication successful')
-                const token = result.getIdToken().getJwtToken()
+                console.log('Authentication successful');
+                const token = result.getIdToken().getJwtToken();
 
-                sessionStorage.setItem('jwtToken', token)
+                sessionStorage.setItem('jwtToken', token);
 
                 cognitoUser.getUserAttributes((err, attributes) => {
                     if (err) {
-                        console.error('Error fetching attributes:', err.message)
-                        setAlert(true)
-                        setAlertMessage('Error fetching user attributes.')
+                        console.error(
+                            'Error fetching attributes:',
+                            err.message
+                        );
+                        setAlert(true);
+                        setAlertMessage('Error fetching user attributes.');
                     } else {
                         const emailVerifiedAttr = attributes.find(
                             attr => attr.Name === 'email_verified'
-                        )
+                        );
                         const isEmailVerified =
                             emailVerifiedAttr &&
-                            emailVerifiedAttr.Value === 'true'
+                            emailVerifiedAttr.Value === 'true';
 
                         if (isEmailVerified) {
-                            navigate('/home')
+                            navigate('/home');
                         } else {
-                            navigate('/verify')
+                            navigate('/verify');
                         }
                     }
-                })
+                });
             },
             onFailure: err => {
                 console.error(
                     'Authentication failed:',
                     err.message || JSON.stringify(err)
-                )
-                setAlert(true)
+                );
+                setAlert(true);
                 setAlertMessage(
                     'Incorrect email or password. Please try again.'
-                )
+                );
             },
-        })
-    }
+        });
+    };
 
     return (
         <div>
@@ -156,7 +160,7 @@ function Login() {
                 </div>
             </section>
         </div>
-    )
+    );
 }
 
-export default Login
+export default Login;
