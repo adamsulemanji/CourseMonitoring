@@ -19,11 +19,6 @@ function Home() {
     useEffect(() => {
         const tokenKey = `CognitoIdentityServiceProvider.${userPool.clientId}.${userID}.idToken`;
 
-        console.log('Token key:', tokenKey);
-        console.log('userID:', userID);
-        console.log('email:', email);
-        console.log('userPool:', userPool);
-
         if (!userID || !email) {
             navigate('/login');
             return;
