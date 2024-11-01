@@ -7,6 +7,7 @@ import { Navbar, Nav, NavItem } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import userPool from '../../config/cognitoPool';
 import { UserContext } from '../../App';
+import NavBar from './NavBar';
 
 function Home() {
     const [classes, setClasses] = useState([]);
@@ -49,20 +50,7 @@ function Home() {
 
     return (
         <div>
-            <Navbar bg="light" expand="lg">
-                <Navbar.Brand href="/">Course Monitoring</Navbar.Brand>
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="ml-auto">
-                        <NavItem>
-                            <Nav.Link href="/home">Home</Nav.Link>
-                        </NavItem>
-                        <NavItem>
-                            <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-                        </NavItem>
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
+            <NavBar onLogout={handleLogout} />
 
             <section className="bg-gray-50">
                 <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:py-0">

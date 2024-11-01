@@ -1,7 +1,37 @@
 import { Link } from 'react-router-dom';
-import React from 'react';
+import { React, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import userPool from '../config/cognitoPool';
+import { set } from 'mongoose';
 
 function Landing() {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const currentUser = userPool.getCurrentUser();
+        if (currentUser) {
+            currentUser.getSession((err, session) => {
+                if (session && session.isValid()) {
+                    setLoading(true);
+                    setTimeout(() => {}, 2000);
+                    setLoading(false);
+                    navigate('/home');
+                }
+            });
+        }
+    }, [navigate]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <h1 className="text-2xl font-semibold text-purple-900">
+                    Loading...
+                </h1>
+            </div>
+        );
+    }
+
     return (
         <div>
             <section className="bg-gray-50">

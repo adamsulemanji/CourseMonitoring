@@ -6,6 +6,7 @@ import Home from './components/home/Home';
 import Signup from './components/auth/Signup';
 import ErrorPage from './components/home/ErrorPage';
 import VerifyEmail from './components/auth/Verify';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 export const UserContext = React.createContext(null);
 
@@ -26,7 +27,14 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Landing />} />
                         <Route path="/login" element={<Login />} />
-                        <Route path="/home" element={<Home />} />
+                        <Route
+                            path="/home"
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/verify" element={<VerifyEmail />} />
                         <Route path="*" element={<ErrorPage />} />
