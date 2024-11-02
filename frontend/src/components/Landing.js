@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { React, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import userPool from '../config/cognitoPool';
-import { set } from 'mongoose';
 
 function Landing() {
     const navigate = useNavigate();
@@ -14,7 +13,7 @@ function Landing() {
             currentUser.getSession((err, session) => {
                 if (session && session.isValid()) {
                     setLoading(true);
-                    setTimeout(() => {}, 2000);
+                    setTimeout(() => {}, 5000);
                     setLoading(false);
                     navigate('/home');
                 }
