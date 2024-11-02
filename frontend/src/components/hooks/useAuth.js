@@ -2,8 +2,9 @@ import { useState, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../../App';
 import { getCurrentSession, getUserAttributes } from '../utils/authUtils';
-import userPool from '../../config/cognitoPool';
 import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
+
+import userPool from '../../config/cognitoPool';
 
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -114,6 +115,82 @@ export const useAuth = () => {
         [resetAuthState, setEmail, setUserID]
     );
 
+    const handleSignup = useCallback(
+        async (email, password, phone) => {
+            setIsLoading(true);
+            try {
+                setError(null);
+                console.log(email, password, phone); // Your existing logging
+
+                // Create the attribute list with the phone number
+                const attributeList = [
+                    {
+                        Name: 'phone_number',
+                        Value: phone,
+                    },
+                ];
+
+                const result = await new Promise((resolve, reject) => {
+                    userPool.signUp(
+                        email,
+                        password,
+                        attributeList, // Pass the properly formatted attributeList
+                        null,
+                        (err, data) => {
+                            if (err) {
+                                console.error('Signup error:', err); // Add error logging
+                                reject(err);
+                            } else {
+                                resolve(data);
+                            }
+                        }
+                    );
+                });
+
+                return result;
+            } catch (error) {
+                console.error('Signup failed:', error);
+                setError(error.message || 'Signup failed');
+                resetAuthState();
+                return null;
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [resetAuthState]
+    );
+
+    const handleVerification = useCallback(async (email, verificationCode) => {
+        setIsLoading(true);
+        try {
+            setError(null);
+
+            const user = new CognitoUser({
+                Username: email,
+                Pool: userPool,
+            });
+
+            const result = await new Promise((resolve, reject) => {
+                user.confirmRegistration(
+                    verificationCode,
+                    true,
+                    (err, data) => {
+                        if (err) reject(err);
+                        else resolve(data);
+                    }
+                );
+            });
+
+            return result;
+        } catch (error) {
+            console.error('Verification failed:', error);
+            setError(error.message || 'Verification failed');
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     return {
         isAuthenticated,
         isLoading,
@@ -121,5 +198,7 @@ export const useAuth = () => {
         checkAuth,
         handleLogout,
         handleLogin,
+        handleSignup,
+        handleVerification,
     };
 };

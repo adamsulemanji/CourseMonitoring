@@ -1,65 +1,31 @@
-import React, { useState, useTransition, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CognitoUser } from 'amazon-cognito-identity-js';
 import { UserContext } from '../../App';
-import userPool from '../../config/cognitoPool';
+import { useAuth } from '../hooks/useAuth';
 
 function Verify() {
-    const { userID, setUserID, email, setEmail } = useContext(UserContext);
+    const { email, setEmail } = useContext(UserContext);
     const [verificationCode, setVerificationCode] = useState('');
     const [message, setMessage] = useState('');
-    const navigator = useNavigate();
+    const navigate = useNavigate();
 
-    const handleVerification = () => {
-        const user = new CognitoUser({
-            Username: email,
-            Pool: userPool,
-        });
+    const { handleVerification } = useAuth();
 
-        user.confirmRegistration(verificationCode, true, (err, result) => {
-            if (err) {
-                setMessage(`Verification failed: ${err.message}`);
-                if (err.code === 'ExpiredCodeException') {
-                    resendVerificationCode();
-                }
-            } else if (result === 'SUCCESS') {
-                user.getUserAttributes((err, attributes) => {
-                    if (err) {
-                        setMessage(
-                            `Error fetching user attributes: ${err.message}`
-                        );
-                    } else {
-                        const subAttr = attributes.find(
-                            attr => attr.Name === 'sub'
-                        );
-                        setUserID(subAttr.Value);
-                        setEmail(email);
-                    }
-                });
+    const onSubmit = async e => {
+        e.preventDefault();
+        try {
+            const result = await handleVerification(email, verificationCode);
+            if (result === 'SUCCESS') {
                 setMessage('Verification successful! Redirecting you to home.');
                 setTimeout(() => {
-                    navigator('/home');
+                    navigate('/home');
                 }, 5000);
             } else {
                 setMessage('Verification failed. Please try again.');
             }
-        });
-    };
-
-    const resendVerificationCode = () => {
-        const user = new CognitoUser({
-            Username: email,
-            Pool: userPool,
-        });
-
-        user.resendConfirmationCode((err, result) => {
-            if (err) {
-                setMessage(
-                    `Resending verification code failed: ${err.message}`
-                );
-            }
-            setMessage('Verification code resent successfully.');
-        });
+        } catch (error) {
+            setMessage(`Verification failed: ${error.message}`);
+        }
     };
 
     return (
@@ -89,10 +55,7 @@ function Verify() {
                             )}
                             <form
                                 className="space-y-4 md:space-y-6"
-                                onSubmit={e => {
-                                    e.preventDefault();
-                                    handleVerification();
-                                }}
+                                onSubmit={onSubmit}
                             >
                                 <div className="flex flex-col space-y-1">
                                     <label

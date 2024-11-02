@@ -1,10 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import userPool from '../../config/cognitoPool';
 import { UserContext } from '../../App';
 import Validate from '../../validation/validate';
+import { useAuth } from '../hooks/useAuth';
+
 function Signup() {
-    const { userID, setUserID, email, setEmail } = useContext(UserContext);
+    const { setEmail } = useContext(UserContext);
     const navigate = useNavigate();
     const [alert, setAlert] = useState(false);
     const [alertResponse, setAlertResponse] = useState('');
@@ -17,39 +18,34 @@ function Signup() {
         phone: '',
     });
 
+    const { handleSignup } = useAuth();
+
     const onChange = e => {
         setFormInput({ ...formInput, [e.target.name]: e.target.value });
     };
 
-    const onSubmit = e => {
+    const onSubmit = async e => {
         e.preventDefault();
 
         const validate = Validate(formInput);
         if (!validate) {
             setAlert(true);
             setAlertResponse(validate.message);
+            return;
         }
 
-        // Use Cognito to sign up
-        userPool.signUp(
-            formInput.email,
-            formInput.password,
-            [
-                { Name: 'phone_number', Value: formInput.phone },
-                { Name: 'email', Value: formInput.email },
-            ],
-            null,
-            async (err, result) => {
-                if (err) {
-                    setAlert(true);
-                    setAlertResponse(err.message || JSON.stringify(err));
-                    return;
-                }
-                console.log('User registered successfully:', result.user);
-                navigate('/verify');
-                setEmail(formInput.email);
-            }
-        );
+        try {
+            await handleSignup(
+                formInput.email,
+                formInput.password,
+                formInput.phone
+            );
+            setEmail(formInput.email);
+            navigate('/verify');
+        } catch (error) {
+            setAlert(true);
+            setAlertResponse(error.message || 'Signup failed');
+        }
     };
 
     return (
