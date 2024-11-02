@@ -24,27 +24,8 @@ export const useAuth = () => {
         try {
             setError(null);
 
-            const currentUser = userPool.getCurrentUser();
-            if (!currentUser) {
-                resetAuthState();
-                return null;
-            }
-
-            console.log('currentUser:', currentUser);
-
-            const session = await getCurrentSession(currentUser);
-            if (!session) {
-                resetAuthState();
-                return null;
-            }
-
-            console.log('session:', session);
-
+            const { user: currentUser, token } = await getCurrentSession();
             const attributes = await getUserAttributes(currentUser);
-
-            console.log('attributes:', attributes);
-            if (!attributes)
-                throw new Error('Failed to retrieve user attributes');
 
             const emailAttr = attributes.find(attr => attr.Name === 'email');
             const subAttr = attributes.find(attr => attr.Name === 'sub');
@@ -58,9 +39,9 @@ export const useAuth = () => {
 
             return subAttr.Value;
         } catch (error) {
-            console.error('Auth check failed:', error);
             setError(error.message || 'Authentication check failed');
             resetAuthState();
+            navigate('/login');
             return null;
         } finally {
             setIsLoading(false);
@@ -75,9 +56,8 @@ export const useAuth = () => {
             }
             localStorage.clear();
             resetAuthState();
-            navigate('/home');
+            navigate('/');
         } catch (error) {
-            console.error('Logout failed:', error);
             setError(error.message || 'Logout failed');
         }
     }, [navigate, resetAuthState]);
@@ -105,12 +85,7 @@ export const useAuth = () => {
                     });
                 });
 
-                const attributes = await new Promise((resolve, reject) => {
-                    cognitoUser.getUserAttributes((err, attributes) => {
-                        if (err) reject(err);
-                        else resolve(attributes);
-                    });
-                });
+                const attributes = await getUserAttributes(cognitoUser);
 
                 const emailVerifiedAttr = attributes.find(
                     attr => attr.Name === 'email_verified'

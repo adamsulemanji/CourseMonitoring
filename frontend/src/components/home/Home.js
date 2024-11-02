@@ -21,7 +21,7 @@ function Home() {
         };
 
         initializeAuth();
-    }, [checkAuth, fetchClasses]);
+    }, []);
 
     if (isLoading) {
         return (

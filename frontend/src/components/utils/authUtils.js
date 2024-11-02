@@ -28,8 +28,12 @@ export const getCurrentSession = async () => {
 export const getUserAttributes = async currentUser => {
     return new Promise((resolve, reject) => {
         currentUser.getUserAttributes((err, attributes) => {
-            if (err) reject(err);
-            resolve(attributes);
+            if (err) {
+                console.error('Failed to retrieve user attributes:', err);
+                return reject(err);
+            } else {
+                return resolve(attributes);
+            }
         });
     });
 };
