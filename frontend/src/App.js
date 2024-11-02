@@ -27,14 +27,15 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Landing />} />
                         <Route path="/login" element={<Login />} />
-                        <Route
+                        {/* <Route
                             path="/home"
                             element={
                                 <ProtectedRoute>
                                     <Home />
                                 </ProtectedRoute>
                             }
-                        />
+                        /> */}
+                        <Route path="/home" element={<Home />} />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/verify" element={<VerifyEmail />} />
                         <Route path="*" element={<ErrorPage />} />

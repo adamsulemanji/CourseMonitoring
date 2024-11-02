@@ -40,7 +40,7 @@ function Home() {
             await saveClass(classData);
             setAddingClass(false);
         } catch (error) {
-            // Handle error (show notification, etc.)
+            console.error('Failed to save class:', error);
         }
     };
 

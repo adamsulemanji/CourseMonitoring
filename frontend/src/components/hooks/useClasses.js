@@ -6,44 +6,15 @@ export const useClasses = onUnauthorized => {
     const { makeAuthenticatedRequest } = useApi(onUnauthorized);
 
     const fetchClasses = async userId => {
-        try {
-            const data = await makeAuthenticatedRequest({
-                method: 'get',
-                url: `/api/classes/${userId}`,
-            });
-            setClasses(data);
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-            throw error;
-        }
+        console.log(userId);
     };
 
     const saveClass = async classData => {
-        try {
-            const data = await makeAuthenticatedRequest({
-                method: 'post',
-                url: '/api/classes',
-                data: classData,
-            });
-            setClasses(prev => [...prev, data]);
-            return data;
-        } catch (error) {
-            console.error('Error saving class:', error);
-            throw error;
-        }
+        console.log(classData);
     };
 
     const deleteClass = async classId => {
-        try {
-            await makeAuthenticatedRequest({
-                method: 'delete',
-                url: `/api/classes/${classId}`,
-            });
-            setClasses(prev => prev.filter(c => c._id !== classId));
-        } catch (error) {
-            console.error('Error deleting class:', error);
-            throw error;
-        }
+        console.log(classId);
     };
 
     return {

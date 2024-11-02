@@ -1,18 +1,15 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
-import userPool from '../../config/cognitoPool';
-import { UserContext } from '../../App';
+import { useAuth } from '../hooks/useAuth';
 
 function Login() {
     const [user, setUser] = useState({
         email: '',
         password: '',
     });
-    const { userID, setUserID, email, setEmail } = useContext(UserContext);
     const [alert, setAlert] = useState(false);
-    const [message, setMessage] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
+    const { handleLogin } = useAuth();
     const navigate = useNavigate();
 
     const onChange = e => {
@@ -21,66 +18,16 @@ function Login() {
 
     const handleSubmit = async e => {
         e.preventDefault();
-
-        const authenticationDetails = new AuthenticationDetails({
-            Username: user.email,
-            Password: user.password,
-        });
-
-        const cognitoUser = new CognitoUser({
-            Username: user.email,
-            Pool: userPool,
-        });
+        setAlert(false);
 
         try {
-            const result = await new Promise((resolve, reject) => {
-                cognitoUser.authenticateUser(authenticationDetails, {
-                    onSuccess: resolve,
-                    onFailure: reject,
-                });
-            });
-
-            const attributes = await new Promise((resolve, reject) => {
-                cognitoUser.getUserAttributes((err, attributes) => {
-                    if (err) reject(err);
-                    else resolve(attributes);
-                });
-            });
-
-            const emailVerifiedAttr = attributes.find(
-                attr => attr.Name === 'email_verified'
-            );
-            const isEmailVerified = emailVerifiedAttr?.Value === 'true';
-
-            if (isEmailVerified) {
-                const subAttr = attributes.find(attr => attr.Name === 'sub');
-                const userId = subAttr.Value;
-
-                setUserID(userId);
-                setEmail(user.email);
-
-                navigate('/home');
-            } else {
-                cognitoUser.resendConfirmationCode(err => {
-                    if (err) {
-                        setAlertMessage(
-                            `Resending verification code failed: ${err.message}`
-                        );
-                        setAlert(true);
-                    } else {
-                        setAlertMessage(
-                            'Verification code resent successfully.'
-                        );
-                        setAlert(true);
-                        setTimeout(() => navigate('/verify'), 2000);
-                    }
-                });
-            }
-        } catch (err) {
-            console.error('Authentication failed:', err);
+            await handleLogin(user.email, user.password);
+            navigate('/');
+        } catch (error) {
             setAlert(true);
-            setAlertMessage('Incorrect email or password. Please try again.');
-            setTimeout(() => setAlert(false), 10000);
+            setAlertMessage(
+                error.message || 'Login failed. Please check your credentials.'
+            );
         }
     };
 
@@ -88,12 +35,12 @@ function Login() {
         <div>
             <section>
                 <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-                    <a
-                        href="/"
+                    <Link
+                        to="/"
                         className="flex items-center mb-6 text-7xl font-semibold text-purple-900"
                     >
                         Course Monitoring
-                    </a>
+                    </Link>
                     <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0">
                         <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
                             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl">
@@ -101,7 +48,7 @@ function Login() {
                             </h1>
                             {alert && (
                                 <div
-                                    className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 "
+                                    className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
                                     role="alert"
                                 >
                                     <span className="font-medium">
@@ -149,16 +96,17 @@ function Login() {
                                         className="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md focus:border-purple-500 focus:outline-none focus:ring"
                                     />
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <button className=" block w-full bg-purple-900 text-white p-3 rounded-lg font-bold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2">
-                                        Submit
-                                    </button>
-                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-purple-900 text-white p-3 rounded-lg font-bold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2"
+                                >
+                                    Sign In
+                                </button>
                                 <p className="text-sm font-light text-gray-700 dark:text-gray-400">
                                     Don't have an account yet?{' '}
                                     <Link
                                         to="/signup"
-                                        className="text-slate-900"
+                                        className="text-slate-900 hover:underline"
                                     >
                                         Sign up
                                     </Link>
