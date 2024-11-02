@@ -56,7 +56,7 @@ export class FrontendConstruct extends Construct {
         );
 
         // ********** CloudFront Distribution **********
-        const s3Origin = new origin.S3StaticWebsiteOrigin(myBucket);
+        const s3Origin = new origin.S3Origin(myBucket);
 
         const distribution = new cloudfront.Distribution(
             this,

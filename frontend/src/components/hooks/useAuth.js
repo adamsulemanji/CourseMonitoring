@@ -120,9 +120,8 @@ export const useAuth = () => {
             setIsLoading(true);
             try {
                 setError(null);
-                console.log(email, password, phone); // Your existing logging
+                console.log(email, password, phone);
 
-                // Create the attribute list with the phone number
                 const attributeList = [
                     {
                         Name: 'phone_number',
@@ -134,7 +133,7 @@ export const useAuth = () => {
                     userPool.signUp(
                         email,
                         password,
-                        attributeList, // Pass the properly formatted attributeList
+                        attributeList,
                         null,
                         (err, data) => {
                             if (err) {
